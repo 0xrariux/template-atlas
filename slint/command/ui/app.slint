@@ -1,0 +1,201 @@
+import {
+    AtlasSettings, ThemeMode, Density, TypographyScale,
+    AtlasTypography, AtlasIcon, IconName
+} from "@atlas-ui/stable.slint";
+import { CommandTheme } from "theme.slint";
+import {
+    MetricRecord, ServiceRecord, HealthRecord, ActivityRecord, AlertRecord,
+    LogRecord, TeamRecord, IntegrationRecord, RegionRecord
+} from "models.slint";
+import { AtlasScrollViewport } from "@atlas-ui/preview-nonresponsive.slint";
+import { CommandSidebar, CommandTopbar } from "shell.slint";
+import { OverviewPage } from "overview.slint";
+import { CommandSecondaryPage } from "pages.slint";
+import { CommandSurface, CommandButton, CommandIconButton, FieldBox } from "components.slint";
+
+export {
+    AtlasSettings, ThemeMode, Density, TypographyScale,
+    MetricRecord, ServiceRecord, HealthRecord, ActivityRecord, AlertRecord,
+    LogRecord, TeamRecord, IntegrationRecord, RegionRecord
+}
+
+export component App inherits Window {
+    title: "Atlas Command";
+    preferred-width: 1440px;
+    preferred-height: 900px;
+    min-width: 1040px;
+    min-height: 720px;
+    background: CommandTheme.canvas;
+
+    in-out property <int> current-page: 0;
+    in property <[MetricRecord]> metrics;
+    in property <[ServiceRecord]> services;
+    in property <[HealthRecord]> health-services;
+    in property <[ActivityRecord]> activities;
+    in property <[AlertRecord]> alerts;
+    in property <[LogRecord]> logs;
+    in property <[TeamRecord]> team;
+    in property <[IntegrationRecord]> integrations;
+    in property <[RegionRecord]> regions;
+    in-out property <string> capture-overlay;
+
+    private property <bool> notifications-open: root.capture-overlay == "notifications";
+    private property <bool> palette-open: root.capture-overlay == "palette";
+    private property <bool> report-open: root.capture-overlay == "report";
+    private property <int> overview-period: root.capture-overlay == "period-7d" ? 3 : 2;
+    private property <int> selected-service: root.capture-overlay == "row-menu" ? 0 : -1;
+    private property <int> row-menu: root.capture-overlay == "row-menu" ? 0 : -1;
+    private property <string> top-search-value;
+    private property <length> secondary-content-height: root.current-page == 1 ? 900px
+        : root.current-page == 2 ? 820px
+        : root.current-page == 6 ? 790px
+        : root.current-page == 3 || root.current-page == 5 ? 780px : 760px;
+    private property <length> page-scroll-y: root.capture-overlay == "lower" || root.capture-overlay == "services-table" || root.capture-overlay == "row-menu" ? 650px : 0px;
+
+    callback navigate-requested(int);
+    public function close-overlays() {
+        root.capture-overlay = "";
+        root.notifications-open = false;
+        root.palette-open = false;
+        root.report-open = false;
+        root.row-menu = -1;
+    }
+
+    CommandSidebar {
+        x: 0px; y: 0px; height: parent.height;
+        current-page: root.current-page;
+        navigate(page) => { root.navigate-requested(page); }
+    }
+    CommandTopbar {
+        x: CommandTheme.sidebar-width; y: 0px;
+        width: parent.width - CommandTheme.sidebar-width;
+        page-title: root.current-page == 0 ? "Overview"
+            : root.current-page == 1 ? "Analytics"
+            : root.current-page == 2 ? "Services"
+            : root.current-page == 3 ? "Activity"
+            : root.current-page == 4 ? "Alerts"
+            : root.current-page == 5 ? "Logs"
+            : root.current-page == 6 ? "Team"
+            : root.current-page == 7 ? "Integrations" : "Settings";
+        search-requested => { root.palette-open = true; }
+        notifications-requested => { root.notifications-open = !root.notifications-open; }
+        search-value <=> root.top-search-value;
+    }
+
+    page-scroll := AtlasScrollViewport {
+        x: CommandTheme.sidebar-width;
+        y: CommandTheme.topbar-height;
+        width: parent.width - CommandTheme.sidebar-width;
+        height: parent.height - CommandTheme.topbar-height;
+        content-height: root.current-page == 0 ? 1460px : root.secondary-content-height + 24px;
+        viewport-y <=> root.page-scroll-y;
+        accessible-label: "Command page content";
+
+        if root.current-page == 0: OverviewPage {
+            x: 28px; y: 24px; width: parent.width - 56px;
+            metrics: root.metrics; services: root.services;
+            health-services: root.health-services; activities: root.activities; alerts: root.alerts;
+            period <=> root.overview-period;
+            selected-service <=> root.selected-service;
+            row-menu <=> root.row-menu;
+            create-report-requested => { root.report-open = true; }
+        }
+        if root.current-page != 0: CommandSecondaryPage {
+            x: 28px; y: 24px; width: parent.width - 56px; height: root.secondary-content-height;
+            page: root.current-page;
+            services: root.services; activities: root.activities; alerts: root.alerts;
+            logs: root.logs; team: root.team; integrations: root.integrations; regions: root.regions;
+        }
+    }
+
+    if root.notifications-open: Rectangle {
+        x: parent.width - 412px; y: 56px; width: 350px; height: 286px;
+        border-width: 1px; border-color: CommandTheme.border; border-radius: 9px; background: #ffffff;
+        drop-shadow-color: #10141a2b; drop-shadow-blur: 36px; drop-shadow-offset-y: 12px;
+        Text { x: 18px; y: 17px; text: "NOTIFICATION CENTER"; color: CommandTheme.muted; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; letter-spacing: 0.95px; }
+        Text { x: 18px; y: 35px; text: "Operations feed"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 15px; font-weight: 700; }
+        AtlasIcon { x: parent.width - 34px; y: 18px; size: 16px; name: IconName.close; icon-color: CommandTheme.secondary; }
+        VerticalLayout {
+            x: 0px; y: 74px; width: parent.width; height: 168px; spacing: 0px;
+            for alert[index] in root.alerts: Rectangle {
+                visible: index < 3; height: index < 3 ? 56px : 0px; background: #ffffff;
+                Rectangle { width: parent.width; height: 1px; background: #eef0f2; }
+                Rectangle { x: 18px; y: 11px; width: 29px; height: 29px; border-radius: 5px; background: alert.tone == 0 ? #fff0f0 : #fff7e9;
+                    AtlasIcon { x: 7px; y: 7px; size: 15px; name: IconName.warning; icon-color: alert.tone == 0 ? CommandTheme.danger : CommandTheme.warning; }
+                }
+                Text { x: 58px; y: 10px; text: alert.title; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; }
+                Text { x: 58px; y: 28px; text: alert.service + " · " + alert.duration; color: CommandTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; }
+            }
+        }
+        Rectangle { x: 0px; y: 243px; width: parent.width; height: 43px; background: #fafafa;
+            Rectangle { width: parent.width; height: 1px; background: #eef0f2; }
+            Text { text: "View all notifications  ›"; color: CommandTheme.accent; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 600; horizontal-alignment: center; vertical-alignment: center; }
+        }
+    }
+
+    if root.palette-open: Rectangle {
+        x: 0px; y: 0px; width: parent.width; height: parent.height;
+        background: #13161b6b;
+        palette := CommandSurface {
+            x: (parent.width - 540px) / 2; y: 108px; width: 540px; height: 303px; border-radius: 10px;
+            drop-shadow-color: #0a0d1345; drop-shadow-blur: 50px; drop-shadow-offset-y: 16px;
+            AtlasIcon { x: 18px; y: 20px; size: 19px; name: IconName.search; icon-color: #667080; }
+            TextInput { x: 52px; y: 12px; width: parent.width - 105px; height: 48px; text: ""; color: #202329; font-family: AtlasTypography.font-sans; font-size: 14px; single-line: true; }
+            Rectangle { x: parent.width - 51px; y: 21px; width: 32px; height: 19px; border-width: 1px; border-color: #d9dce1; border-radius: 4px; background: #ffffff;
+                Text { text: "ESC"; color: #7c828c; font-family: AtlasTypography.font-sans; font-size: 9px; horizontal-alignment: center; vertical-alignment: center; }
+            }
+            Rectangle { y: 60px; width: parent.width; height: 1px; background: CommandTheme.border; }
+            Text { x: 20px; y: 74px; text: "QUICK ACTIONS"; color: #9aa0a9; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; letter-spacing: 0.9px; }
+            VerticalLayout {
+                x: 12px; y: 94px; width: parent.width - 24px; height: 162px;
+                Rectangle { height: 54px; background: #ffffff;
+                    Rectangle { x: 10px; y: 12px; width: 30px; height: 30px; border-width: 1px; border-color: CommandTheme.border; border-radius: 5px; background: #ffffff; AtlasIcon { x: 7px; y: 7px; size: 16px; name: IconName.add; icon-color: #5667e7; } }
+                    Text { x: 51px; y: 10px; text: "Create report"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; }
+                    Text { x: 51px; y: 29px; text: "Generate a new operations report"; color: #8a9099; font-family: AtlasTypography.font-sans; font-size: 8px; }
+                    Text { width: parent.width - 11px; horizontal-alignment: right; text: "R"; color: #9a9fa7; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                }
+                Rectangle { height: 54px; background: #ffffff;
+                    Rectangle { x: 10px; y: 12px; width: 30px; height: 30px; border-width: 1px; border-color: CommandTheme.border; border-radius: 5px; background: #ffffff; AtlasIcon { x: 7px; y: 7px; size: 16px; name: IconName.layers; icon-color: #5667e7; } }
+                    Text { x: 51px; y: 10px; text: "Open services"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; }
+                    Text { x: 51px; y: 29px; text: "Inspect production services"; color: #8a9099; font-family: AtlasTypography.font-sans; font-size: 8px; }
+                    Text { width: parent.width - 11px; horizontal-alignment: right; text: "S"; color: #9a9fa7; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                }
+                Rectangle { height: 54px; background: #ffffff;
+                    Rectangle { x: 10px; y: 12px; width: 30px; height: 30px; border-width: 1px; border-color: CommandTheme.border; border-radius: 5px; background: #ffffff; AtlasIcon { x: 7px; y: 7px; size: 16px; name: IconName.activity; icon-color: #5667e7; } }
+                    Text { x: 51px; y: 10px; text: "System health"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; }
+                    Text { x: 51px; y: 29px; text: "View current platform status"; color: #8a9099; font-family: AtlasTypography.font-sans; font-size: 8px; }
+                    Text { width: parent.width - 11px; horizontal-alignment: right; text: "H"; color: #9a9fa7; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                }
+            }
+            Rectangle { y: 266px; width: parent.width; height: 37px; background: #f7f8f9;
+                Rectangle { width: parent.width; height: 1px; background: CommandTheme.border; }
+                Text { x: 15px; text: "↑↓ Navigate     ↵ Select"; color: #8b919b; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                Text { width: parent.width - 15px; horizontal-alignment: right; text: "Atlas Command"; color: #8b919b; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 600; vertical-alignment: center; }
+            }
+        }
+    }
+
+    if root.report-open: Rectangle {
+        x: 0px; y: 0px; width: parent.width; height: parent.height; background: #13161b70;
+        report-panel := CommandSurface {
+            x: (parent.width - 500px) / 2; y: 250px; width: 500px; height: 400px; border-radius: 10px;
+            drop-shadow-color: #0a0d1345; drop-shadow-blur: 50px; drop-shadow-offset-y: 16px;
+            Text { x: 25px; y: 23px; text: "ATLAS / REPORTING"; color: #737b87; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; letter-spacing: 1px; }
+            Text { x: 25px; y: 42px; text: "Create Report"; color: CommandTheme.text; font-family: AtlasTypography.font-display; font-size: 20px; font-weight: 700; }
+            CommandIconButton { x: parent.width - 44px; y: 24px; icon-name: IconName.close; accessible-label: "Close report"; clicked => { root.report-open = false; } }
+            Rectangle { x: 0px; y: 81px; width: parent.width; height: 1px; background: CommandTheme.border; }
+            Text { x: 25px; y: 104px; text: "Report Name"; color: #626974; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            FieldBox { x: 25px; y: 123px; width: parent.width - 50px; height: 39px; text: "Weekly Operations Review"; show-icon: false; }
+            Text { x: 25px; y: 184px; text: "Time Range"; color: #626974; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            Text { x: 256px; y: 184px; text: "Format"; color: #626974; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            FieldBox { x: 25px; y: 202px; width: 219px; height: 39px; text: "Last 7 days                                      ⌄"; show-icon: false; }
+            FieldBox { x: 256px; y: 202px; width: 219px; height: 39px; text: "PDF document                                 ⌄"; show-icon: false; }
+            Text { x: 25px; y: 263px; text: "Services"; color: #626974; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            FieldBox { x: 25px; y: 281px; width: parent.width - 50px; height: 39px; text: "All production services                                                                ⌄"; show-icon: false; }
+            Rectangle { x: 0px; y: 332px; width: parent.width; height: 1px; background: CommandTheme.border; }
+            CommandButton { x: parent.width - 197px; y: 349px; width: 72px; text: "Cancel"; clicked => { root.report-open = false; } }
+            CommandButton { x: parent.width - 117px; y: 349px; width: 92px; text: "Create Report"; show-icon: true; icon-name: IconName.logs; primary: true; clicked => { root.report-open = false; } }
+        }
+    }
+
+}

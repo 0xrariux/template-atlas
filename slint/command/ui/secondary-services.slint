@@ -1,0 +1,97 @@
+import { AtlasTypography, AtlasIcon, AtlasStatusIndicator, BadgeTone, IconName } from "@atlas-ui/stable.slint";
+import { CommandTheme } from "theme.slint";
+import { ServiceRecord } from "models.slint";
+import {
+    CommandSurface, SecondaryHeader, FieldBox, CommandSearchField, MiniAction, CommandBadge,
+    CommandProgressRail, TrendLine
+} from "components.slint";
+
+component ServiceSummary inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    in property <string> meta;
+    in property <color> value-color: CommandTheme.text;
+    Text { x: 16px; y: 14px; width: parent.width - 32px; text: root.label; color: #8a9099; font-family: AtlasTypography.font-sans; font-size: 7px; letter-spacing: 0.65px; horizontal-alignment: left; }
+    Text { x: 16px; y: 35px; width: parent.width - 32px; text: root.value; color: root.value-color; font-family: AtlasTypography.font-display; font-size: 19px; font-weight: 700; horizontal-alignment: left; }
+    Text { x: 16px; y: 63px; width: parent.width - 32px; text: root.meta; color: #9ba0a8; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: left; }
+}
+
+component ServiceCard inherits CommandSurface {
+    in property <ServiceRecord> service;
+    in property <int> item-index;
+    background: service-action.has-hover ? #fafbff : #ffffff;
+    border-color: service-action.has-hover ? #b9c2ff : CommandTheme.border;
+    animate background { duration: 110ms; }
+    animate border-color { duration: 110ms; }
+    Rectangle { x: 14px; y: 14px; width: 30px; height: 30px; border-radius: 5px; background: #eef0f4;
+        Text { text: root.service.initials; color: #54606d; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+    }
+    Text { x: 53px; y: 14px; width: parent.width - 96px; text: root.service.name; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 700; horizontal-alignment: left; }
+    Text { x: 53px; y: 31px; width: parent.width - 96px; text: root.service.region; color: #989da5; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: left; }
+    AtlasIcon { x: parent.width - 30px; y: 21px; size: 13px; name: IconName.menu; icon-color: #7f8690; }
+    Rectangle { x: 14px; y: 59px; width: parent.width - 28px; height: 31px; background: #f7f8f9;
+        Text { x: 9px; width: 70px; text: root.service.version; color: #6e7580; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; }
+        CommandBadge { x: parent.width - 76px; y: 6px; width: 68px; text: root.service.status; status-tone: root.service.tone; }
+    }
+    Rectangle { x: 14px; y: 101px; width: parent.width - 28px; height: 34px; background: #00000000;
+        Rectangle { x: parent.width / 3; y: 3px; width: 1px; height: 25px; background: CommandTheme.border; }
+        Rectangle { x: 2 * parent.width / 3; y: 3px; width: 1px; height: 25px; background: CommandTheme.border; }
+        Text { x: 0px; width: parent.width / 3 - 12px; text: "REQUESTS\n" + root.service.requests; color: #626974; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Text { x: parent.width / 3 + 12px; width: parent.width / 3 - 24px; text: "LATENCY\n" + root.service.latency; color: #626974; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Text { x: 2 * parent.width / 3 + 12px; width: parent.width / 3 - 12px; text: "ERRORS\n" + root.service.errors; color: root.service.tone == 1 ? CommandTheme.danger : #626974; font-family: AtlasTypography.font-sans; font-size: 7px; }
+    }
+    TrendLine { x: 14px; y: 143px; width: parent.width - 28px; height: 33px; variant: root.item-index == 2 ? 2 : Math.mod(root.item-index, 2); line-color: root.service.tone == 1 ? CommandTheme.warning : CommandTheme.accent; }
+    Rectangle { x: 14px; y: 186px; width: parent.width - 28px; height: 1px; background: #edf0f2; }
+    AtlasStatusIndicator { x: 14px; y: 206px; width: 5px; height: 5px; label: root.service.name + " instances online"; tone: BadgeTone.healthy; indicator-color: CommandTheme.success; }
+    Text { x: 25px; y: 201px; text: root.service.tone == 2 ? "0 INSTANCES" : "8 INSTANCES"; color: #848a93; font-family: AtlasTypography.font-sans; font-size: 6px; }
+    Text { x: 0px; y: 200px; width: parent.width - 17px; text: "Open service   ›"; color: CommandTheme.accent; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; }
+    service-action := TouchArea { mouse-cursor: MouseCursor.pointer; }
+}
+
+export component ServicesPage inherits Rectangle {
+    in property <[ServiceRecord]> services;
+    private property <string> service-search;
+    height: 820px; background: #00000000;
+
+    SecondaryHeader {
+        x: 0px; y: 0px; width: parent.width; index: "03"; eyebrow: "SERVICE CATALOG"; title: "Services";
+        subtitle: "Inspect and manage every production workload."; primary-label: "New Service"; primary-icon: IconName.add;
+    }
+
+    CommandSurface {
+        x: 0px; y: 123px; width: parent.width; height: 93px;
+        HorizontalLayout { x: 0px; y: 0px; width: parent.width * 0.75; height: parent.height; spacing: 0px;
+            ServiceSummary { horizontal-stretch: 1; label: "PRODUCTION"; value: "6"; meta: "All regions"; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            ServiceSummary { horizontal-stretch: 1; label: "HEALTHY"; value: "4"; meta: "66.7% of catalog"; value-color: CommandTheme.success; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            ServiceSummary { horizontal-stretch: 1; label: "DEGRADED"; value: "1"; meta: "Indexer · 18 min"; value-color: CommandTheme.warning; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            ServiceSummary { horizontal-stretch: 1; label: "MAINTENANCE"; value: "1"; meta: "Scheduled window"; }
+        }
+        Rectangle { x: parent.width * 0.75; width: parent.width * 0.25; height: parent.height; background: CommandTheme.dark-surface;
+            Text { x: 16px; y: 14px; text: "SERVICE HEALTH"; color: #8a9099; font-family: AtlasTypography.font-sans; font-size: 7px; letter-spacing: 0.65px; }
+            Text { x: 16px; y: 35px; text: "94.2%"; color: #ffffff; font-family: AtlasTypography.font-display; font-size: 17px; font-weight: 700; }
+            CommandProgressRail { x: 16px; y: 64px; width: parent.width - 32px; value: 94.2; progress-label: "Service health"; fill-color: #5b70ff; track-color: #353a42; }
+        }
+    }
+
+    CommandSurface {
+        x: 0px; y: 228px; width: parent.width; height: 538px;
+        Rectangle { x: 0px; y: 0px; width: parent.width; height: 58px; background: #ffffff;
+            CommandSearchField { x: 12px; y: 13px; width: 240px; placeholder-text: "Search services..."; value <=> root.service-search; }
+            MiniAction { x: 260px; y: 13px; width: 82px; text: "All services  ⌄"; }
+            MiniAction { x: parent.width - 115px; y: 13px; width: 61px; text: "Filters"; show-icon: true; icon-name: IconName.filter; }
+            MiniAction { x: parent.width - 46px; y: 13px; width: 34px; text: "↻"; }
+            Rectangle { y: 57px; width: parent.width; height: 1px; background: CommandTheme.border; }
+        }
+        Rectangle { x: 12px; y: 70px; width: parent.width - 24px; height: 456px; background: #00000000;
+            for service[index] in root.services: ServiceCard {
+                x: Math.mod(index, 3) * (parent.width + 9px) / 3;
+                y: index < 3 ? 0px : 236px;
+                width: (parent.width - 18px) / 3; height: 227px;
+                service: service; item-index: index;
+            }
+        }
+    }
+}

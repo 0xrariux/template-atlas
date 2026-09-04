@@ -1,0 +1,170 @@
+import { AtlasTypography, AtlasIcon, AtlasStatusIndicator, BadgeTone, IconName, AtlasShape } from "@atlas-ui/stable.slint";
+import { CommandTheme } from "theme.slint";
+import { ActivityRecord, AlertRecord } from "models.slint";
+import {
+    CommandSurface, CommandButton, SecondaryHeader, FieldBox, CommandSearchField, MiniAction,
+    CommandProgressRail, TrendLine
+} from "components.slint";
+
+component ActivityRail inherits CommandSurface {
+    Text { x: 16px; y: 15px; text: "ACTIVITY SUMMARY"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.7px; }
+    Text { x: 16px; y: 34px; text: "Today"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 13px; font-weight: 700; }
+    VerticalLayout { x: 16px; y: 62px; width: parent.width - 32px; height: 112px; spacing: 5px;
+        for label[index] in ["Deployments", "Configuration", "Access", "Security"]: Rectangle {
+            height: 24px;
+            Text { x: 0px; y: 0px; text: label; color: #686f79; font-family: AtlasTypography.font-sans; font-size: 8px; }
+            Text { x: 0px; y: 0px; width: parent.width; text: index == 0 ? "12" : index == 1 ? "9" : index == 2 ? "8" : "4"; color: #4f5660; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; }
+            CommandProgressRail { x: 0px; y: 17px; width: parent.width; value: index == 0 ? 78 : index == 1 ? 58 : index == 2 ? 51 : 25; progress-label: label + " activity share"; }
+        }
+    }
+}
+
+export component ActivityPage inherits Rectangle {
+    in property <[ActivityRecord]> activities;
+    private property <string> activity-search;
+    height: 780px; background: #00000000;
+    SecondaryHeader { x: 0px; y: 0px; width: parent.width; index: "04"; eyebrow: "AUDIT STREAM"; title: "Activity"; subtitle: "A complete record of operational changes and access."; primary-label: ""; }
+
+    CommandSurface {
+        x: 0px; y: 123px; width: parent.width; height: 52px;
+        CommandSearchField { x: 9px; y: 9px; width: parent.width - 396px; height: 34px; placeholder-text: "Search the audit stream"; value <=> root.activity-search; }
+        MiniAction { x: parent.width - 379px; y: 9px; width: 102px; height: 34px; text: "All activity  ⌄"; }
+        MiniAction { x: parent.width - 269px; y: 9px; width: 124px; height: 34px; text: "Sep 01, 2026  ⌄"; show-icon: true; icon-name: IconName.clock; }
+        MiniAction { x: parent.width - 137px; y: 9px; width: 128px; height: 34px; text: "Advanced filters"; show-icon: true; icon-name: IconName.filter; }
+    }
+
+    stream := CommandSurface {
+        x: 0px; y: 187px; width: parent.width - 282px; height: 536px;
+        Rectangle { x: 1px; y: 1px; width: parent.width - 2px; height: 51px;
+            Text { x: 17px; y: 12px; text: "TODAY"; color: #9b9fa7; font-family: AtlasTypography.font-sans; font-size: 6px; }
+            Text { x: 17px; y: 26px; text: "SEPTEMBER 01, 2026"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            Text { x: 0px; y: 19px; width: parent.width - 17px; text: "42 EVENTS"; color: #8e949d; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; }
+            Rectangle { y: 51px; width: parent.width; height: 1px; background: CommandTheme.border; }
+        }
+        VerticalLayout { x: 1px; y: 52px; width: parent.width - 2px; height: 432px; spacing: 0px;
+            for row[index] in root.activities: Rectangle {
+                height: 72px; background: activity-action.has-hover ? #f7f8ff : #ffffff;
+                animate background { duration: 100ms; }
+                if index < root.activities.length - 1: Rectangle { y: 71px; width: parent.width; height: 1px; background: #edf0f2; }
+                Text { x: 14px; y: 27px; width: 58px; text: row.time; color: #9298a1; font-family: AtlasTypography.font-mono; font-size: 7px; }
+                if index < 5: Rectangle { x: 90px; y: 44px; width: 1px; height: 28px; background: #dfe3e7; }
+                Rectangle { x: 75px; y: 13px; width: 31px; height: 31px; border-width: 1px; border-color: CommandTheme.border; border-radius: AtlasShape.radius-round; background: #ffffff;
+                    AtlasIcon { x: 9px; y: 9px; size: 13px; name: row.icon == 0 ? IconName.cloud : row.icon == 1 ? IconName.users : row.icon == 2 ? IconName.lock : row.icon == 3 ? IconName.settings : row.icon == 4 ? IconName.database : IconName.layers; icon-color: CommandTheme.accent; }
+                }
+                Text { x: 116px; y: 12px; width: parent.width - 155px; text: row.title; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; horizontal-alignment: left; }
+                Text { x: 116px; y: 30px; width: parent.width - 155px; text: row.detail; color: #717883; font-family: AtlasTypography.font-sans; font-size: 8px; overflow: elide; horizontal-alignment: left; }
+                Text { x: 116px; y: 49px; width: parent.width - 155px; text: row.actor + "   •   " + row.category; color: #777e88; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: left; }
+                AtlasIcon { x: parent.width - 28px; y: 25px; size: 13px; name: IconName.menu; icon-color: #989da5; }
+                activity-action := TouchArea { mouse-cursor: MouseCursor.pointer; }
+            }
+        }
+        MiniAction { x: (parent.width - 84px) / 2; y: 495px; width: 84px; text: "Load earlier activity"; }
+    }
+
+    Rectangle { x: stream.width + 12px; y: 187px; width: parent.width - self.x; height: 414px; background: #00000000;
+        ActivityRail { x: 0px; y: 0px; width: parent.width; height: 183px; }
+        CommandSurface { y: 195px; width: parent.width; height: 145px;
+            Text { x: 16px; y: 15px; text: "MOST ACTIVE"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.7px; }
+            for person[index] in ["Platform Operator", "Demo Administrator"]: Rectangle {
+                x: 16px; y: 44px + index * 48px; width: parent.width - 32px; height: 45px;
+                Rectangle { y: 0px; width: parent.width; height: 1px; background: #edf0f2; }
+                Rectangle { x: 0px; y: 9px; width: 28px; height: 28px; border-radius: AtlasShape.radius-round; background: #252930;
+                    Text { text: index == 0 ? "PO" : "DA"; color: #ffffff; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: center; vertical-alignment: center; }
+                }
+                Text { x: 38px; y: 8px; text: person; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+                Text { x: 38px; y: 24px; text: index == 0 ? "14 events · Platform" : "9 events · Operations"; color: #989da5; font-family: AtlasTypography.font-sans; font-size: 6px; }
+            }
+        }
+        CommandSurface { y: 352px; width: parent.width; height: 64px; background: #f5f8f6;
+            AtlasIcon { x: 17px; y: 22px; size: 18px; name: IconName.shield; icon-color: CommandTheme.success; }
+            Text { x: 48px; y: 15px; text: "Audit retention"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            Text { x: 48px; y: 32px; text: "Events are retained for 365 days."; color: #87908b; font-family: AtlasTypography.font-sans; font-size: 6px; }
+        }
+    }
+}
+
+component AlertStat inherits Rectangle {
+    in property <string> label; in property <string> value; in property <string> meta; in property <color> value-color: CommandTheme.text;
+    Text { x: 17px; y: 14px; text: root.label; color: #858b95; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.7px; }
+    Text { x: 17px; y: 35px; text: root.value; color: root.value-color; font-family: AtlasTypography.font-display; font-size: 21px; font-weight: 700; }
+    Text { x: 17px; y: 64px; text: root.meta; color: #9ba0a8; font-family: AtlasTypography.font-sans; font-size: 7px; }
+}
+
+export component AlertsPage inherits Rectangle {
+    in property <[AlertRecord]> alerts;
+    private property <int> selected-alert: 1;
+    height: 760px; background: #00000000;
+    SecondaryHeader { x: 0px; y: 0px; width: parent.width; index: "05"; eyebrow: "INCIDENT CENTER"; title: "Alerts"; subtitle: "Prioritize, route, and resolve platform incidents."; primary-label: "New Policy"; primary-icon: IconName.add; }
+
+    CommandSurface { x: 0px; y: 123px; width: parent.width; height: 91px;
+        Rectangle { x: 0px; y: 7px; width: 3px; height: parent.height - 14px; background: CommandTheme.danger; }
+        Rectangle { x: 16px; y: 21px; width: 38px; height: 38px; border-radius: 6px; background: #fff0f0;
+            AtlasIcon { x: 10px; y: 10px; size: 18px; name: IconName.warning; icon-color: CommandTheme.danger; }
+        }
+        Text { x: 67px; y: 17px; text: "OPEN CRITICAL INCIDENT"; color: #a15c5c; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; letter-spacing: 0.65px; }
+        Text { x: 67px; y: 34px; text: "Indexer latency above service objective"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 12px; font-weight: 700; }
+        Text { x: 67px; y: 54px; text: "Impacting search and analytics ingestion in eu-central-1."; color: #7b818a; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Rectangle { x: parent.width - 534px; y: 30px; width: 1px; height: 31px; background: CommandTheme.border; }
+        Text { x: parent.width - 510px; y: 20px; text: "ACTIVE FOR"; color: #a15c5c; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; }
+        Text { x: parent.width - 510px; y: 38px; text: "18:42"; color: CommandTheme.text; font-family: AtlasTypography.font-mono; font-size: 17px; }
+        MiniAction { x: parent.width - 103px; y: 29px; width: 86px; text: "Acknowledge"; show-icon: true; icon-name: IconName.check; }
+    }
+
+    CommandSurface { x: 0px; y: 226px; width: parent.width; height: 88px;
+        HorizontalLayout { x: 0px; y: 0px; width: parent.width; height: parent.height; spacing: 0px;
+            AlertStat { horizontal-stretch: 1; label: "OPEN ALERTS"; value: "4"; meta: "−2 since yesterday"; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            AlertStat { horizontal-stretch: 1; label: "CRITICAL"; value: "1"; meta: "Immediate action"; value-color: CommandTheme.danger; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            AlertStat { horizontal-stretch: 1; label: "MEAN TIME TO ACK"; value: "4m 12s"; meta: "Target under 5 min"; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            AlertStat { horizontal-stretch: 1; label: "RESOLVED / 7D"; value: "38"; meta: "96% within SLO"; }
+        }
+    }
+
+    workbench := CommandSurface { x: 0px; y: 326px; width: parent.width; height: 353px;
+        Rectangle { x: 1px; y: 1px; width: parent.width - 301px; height: 30px; background: #f6f7f8;
+            for label[index] in ["SEVERITY", "ALERT", "SERVICE", "DURATION", "OWNER", "STATUS"]: Text {
+                x: index == 0 ? 12px : index == 1 ? parent.width * 0.15 : index == 2 ? parent.width * 0.47 : index == 3 ? parent.width * 0.62 : index == 4 ? parent.width * 0.75 : parent.width * 0.88;
+                text: label; color: #8f949c; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.55px; vertical-alignment: center;
+            }
+        }
+        VerticalLayout { x: 1px; y: 31px; width: parent.width - 301px; height: 232px; spacing: 0px;
+            for alert[index] in root.alerts: Rectangle {
+                height: 58px; background: root.selected-alert == alert.id ? #eef0ff : alert-action.has-hover ? #f7f8ff : #ffffff;
+                animate background { duration: 100ms; }
+                if index < root.alerts.length - 1: Rectangle { y: 57px; width: parent.width; height: 1px; background: #edf0f2; }
+                AtlasStatusIndicator { x: 12px; y: 25px; width: 5px; height: 5px; label: alert.severity + " alert"; tone: alert.tone == 0 ? BadgeTone.danger : alert.tone == 1 ? BadgeTone.warning : BadgeTone.neutral; indicator-color: alert.tone == 0 ? CommandTheme.danger : alert.tone == 1 ? CommandTheme.warning : #647285; }
+                Text { x: 23px; width: parent.width * 0.12; text: alert.severity; color: alert.tone == 0 ? CommandTheme.danger : alert.tone == 1 ? CommandTheme.warning : #647285; font-family: AtlasTypography.font-sans; font-size: 7px; vertical-alignment: center; }
+                Text { x: parent.width * 0.15; y: 15px; width: parent.width * 0.29; text: alert.title; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+                Text { x: parent.width * 0.15; y: 32px; width: parent.width * 0.29; text: alert.region; color: #999ea6; font-family: AtlasTypography.font-sans; font-size: 6px; }
+                Text { x: parent.width * 0.47; width: parent.width * 0.14; text: alert.service; color: #5c636d; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.62; width: parent.width * 0.12; text: alert.duration; color: #5c636d; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.75; width: parent.width * 0.13; text: alert.owner; color: #5c636d; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; overflow: elide; }
+                Rectangle { x: parent.width * 0.88; y: 20px; width: parent.width * 0.11; height: 18px; background: #f0f2f4; border-radius: 3px;
+                    Text { text: alert.status; color: #666d77; font-family: AtlasTypography.font-sans; font-size: 6px; horizontal-alignment: center; vertical-alignment: center; overflow: elide; }
+                }
+                alert-action := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.selected-alert = alert.id; } }
+            }
+        }
+        Rectangle { x: parent.width - 300px; y: 1px; width: 1px; height: parent.height - 2px; background: CommandTheme.border; }
+        Rectangle { x: parent.width - 299px; y: 1px; width: 298px; height: parent.height - 2px; background: #ffffff;
+            Text { x: 17px; y: 15px; text: "ALERT DETAIL"; color: #999ea6; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.7px; }
+            AtlasIcon { x: parent.width - 34px; y: 14px; size: 13px; name: IconName.close; icon-color: #8c929b; }
+            AtlasStatusIndicator { x: 17px; y: 63px; width: 5px; height: 5px; label: "Critical active alert"; tone: BadgeTone.danger; indicator-color: CommandTheme.danger; }
+            Text { x: 28px; y: 57px; text: "CRITICAL / ACTIVE"; color: CommandTheme.danger; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; }
+            Text { x: 17px; y: 78px; text: "High latency detected"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 13px; font-weight: 700; }
+            Text { x: 17px; y: 105px; width: parent.width - 34px; text: "Indexer p95 latency has exceeded 120 ms for more than fifteen minutes."; color: #747b85; font-family: AtlasTypography.font-sans; font-size: 8px; wrap: word-wrap; }
+            Rectangle { x: 17px; y: 151px; width: parent.width - 34px; height: 1px; background: #edf0f2; }
+            for label[index] in ["CURRENT VALUE\n126 ms", "THRESHOLD\n120 ms", "SERVICE\nIndexer", "REGION\neu-central-1"]: Text {
+                x: 17px + Math.mod(index, 2) * (parent.width - 34px) / 2; y: 163px + (index < 2 ? 0px : 43px); width: (parent.width - 34px) / 2;
+                text: label; color: #5e6570; font-family: AtlasTypography.font-sans; font-size: 7px;
+            }
+            Rectangle { x: 17px; y: 235px; width: parent.width - 34px; height: 65px; background: #faf6f6;
+                TrendLine { x: 10px; y: 9px; width: parent.width - 20px; height: 46px; variant: 1; line-color: CommandTheme.danger; }
+            }
+            MiniAction { x: 17px; y: 309px; width: 126px; text: "Open runbook  ↗"; }
+            CommandButton { x: 149px; y: 309px; width: parent.width - 166px; height: 32px; text: "Resolve"; show-icon: true; icon-name: IconName.check; primary: true; }
+        }
+    }
+}

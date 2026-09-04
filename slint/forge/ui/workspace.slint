@@ -1,0 +1,336 @@
+import {
+    AtlasIcon, IconName, AtlasTypography, AtlasStatusIndicator, BadgeTone
+} from "@atlas-ui/stable.slint";
+import { ForgeTheme } from "theme.slint";
+import { CodeRecord, TerminalRecord, DependencyRecord } from "models.slint";
+import {
+    FieldFrame, ForgeButton, ForgeIconButton, ForgeStatusDot, ForgeSwitch,
+    ForgeWorkspaceTab, MicroLabel, MonoLabel, PanelRule
+} from "components.slint";
+
+component EditorTabs inherits Rectangle {
+    in-out property <string> selected-file;
+    in-out property <bool> open-main: true;
+    in-out property <bool> open-app: true;
+    in-out property <bool> open-cargo: true;
+    in-out property <bool> open-card: false;
+    in-out property <bool> open-preview: false;
+    in-out property <string> preview-file;
+    callback select-file(string);
+    callback close-file(string);
+    height: ForgeTheme.tabs-height;
+    background: #141719;
+    PanelRule { x: 0px; y: parent.height - 1px; width: parent.width; }
+    if root.open-main: ForgeWorkspaceTab { x: 0px; width: 140px; tab-id: "main.rs"; text: "main.rs"; forge-icon: IconName.logs; dirty: true; closable: true; selected: root.selected-file == "main.rs"; activated => { root.select-file("main.rs"); } close-requested => { root.close-file("main.rs"); } }
+    if root.open-app: ForgeWorkspaceTab { x: (root.open-main ? 140px : 0px); width: 140px; tab-id: "app.slint"; text: "app.slint"; forge-icon: IconName.logs; dirty: true; closable: true; selected: root.selected-file == "app.slint"; activated => { root.select-file("app.slint"); } close-requested => { root.close-file("app.slint"); } }
+    if root.open-cargo: ForgeWorkspaceTab { x: (root.open-main ? 140px : 0px) + (root.open-app ? 140px : 0px); width: 140px; tab-id: "Cargo.toml"; text: "Cargo.toml"; forge-icon: IconName.logs; closable: true; selected: root.selected-file == "Cargo.toml"; activated => { root.select-file("Cargo.toml"); } close-requested => { root.close-file("Cargo.toml"); } }
+    if root.open-card: ForgeWorkspaceTab { x: (root.open-main ? 140px : 0px) + (root.open-app ? 140px : 0px) + (root.open-cargo ? 140px : 0px); width: 140px; tab-id: "card.rs"; text: "card.rs"; forge-icon: IconName.logs; closable: true; selected: root.selected-file == "card.rs"; activated => { root.select-file("card.rs"); } close-requested => { root.close-file("card.rs"); } }
+    if root.open-preview: ForgeWorkspaceTab { x: (root.open-main ? 140px : 0px) + (root.open-app ? 140px : 0px) + (root.open-cargo ? 140px : 0px) + (root.open-card ? 140px : 0px); width: 140px; tab-id: root.preview-file; text: root.preview-file; forge-icon: IconName.logs; closable: true; selected: root.selected-file == root.preview-file; activated => { root.select-file(root.preview-file); } close-requested => { root.close-file(root.preview-file); } }
+    Rectangle { x: parent.width - 41px; width: 41px; height: parent.height; border-width: 1px; border-color: ForgeTheme.border; background: #171a1d;
+        AtlasIcon { x: 14px; y: 11px; size: 13px; name: IconName.layers; icon-color: #6f777e; }
+    }
+}
+
+component CodeEditor inherits Rectangle {
+    in property <[CodeRecord]> lines;
+    in property <string> file-name;
+    in-out property <string> editor-text: root.file-name == "app.slint"
+        ? "import { PrimaryButton } from \"@atlas-ui/stable.slint\";\n\nexport component AppWindow inherits Window {\n    title: \"Atlas Forge\";\n    PrimaryButton {\n        text: \"Run Task\";\n    }\n}"
+        : root.file-name == "Cargo.toml"
+            ? "[package]\nname = \"atlas-ui\"\nversion = \"0.4.0\"\nedition = \"2024\"\n\n[dependencies]\nslint = \"1.14\"\nserde = { version = \"1\", features = [\"derive\"] }"
+            : root.file-name == "card.rs"
+                ? "pub struct Card {\n    pub title: String,\n    pub description: String,\n}\n\nimpl Card {\n    pub fn new(title: impl Into<String>) -> Self {\n        Self { title: title.into(), description: String::new() }\n    }\n}"
+                : root.file-name != "main.rs"
+                    ? "// " + root.file-name + "\n\n// Editable demonstration buffer.\n// Select this text or start typing to modify the document.\n"
+                    : "use slint::{ComponentHandle, SharedString};\nuse atlas_ui::{AtlasTheme, PrimaryButton};\n\nslint::include_modules!();\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    tracing_subscriber::fmt()\n        .with_target(false)\n        .compact()\n        .init();\n\n    let app = AppWindow::new()?;\n    let weak = app.as_weak();\n\n    app.on_run_task(move |task_id| {\n        let handle = weak.clone();\n        tokio::spawn(async move {\n            let result = execute_task(task_id).await;\n            handle.upgrade_in_event_loop(move |ui| {\n                ui.set_status(SharedString::from(result));\n            });\n        });\n    });\n\n    app.run()?;\n    Ok(())\n}";
+    private property <bool> navigation-needed: root.lines.length * 15.6px + 20px > root.height;
+    background: ForgeTheme.canvas;
+    Rectangle { x: 0px; y: 0px; width: 49px; height: parent.height; background: ForgeTheme.canvas; border-width: 1px; border-color: #1b2024; }
+    VerticalLayout {
+        x: 0px; y: 10px; width: 49px; spacing: 0px;
+        for line in root.lines: Text {
+            width: parent.width - 10px; height: 15.6px; text: line.number; color: #444c53;
+            font-family: AtlasTypography.font-mono; font-size: 9px;
+            horizontal-alignment: right; vertical-alignment: center;
+        }
+    }
+    if editor.has-focus: Rectangle { x: 49px; y: 0px; width: 2px; height: parent.height; background: ForgeTheme.accent; }
+    editor := TextInput {
+        x: 61px; y: 10px; width: parent.width - (root.navigation-needed ? 148px : 77px); height: parent.height - 20px;
+        text <=> root.editor-text;
+        read-only: false;
+        single-line: false;
+        color: #c6cbcf;
+        selection-background-color: #855f2f;
+        selection-foreground-color: #ffffff;
+        font-family: AtlasTypography.font-mono;
+        font-size: 10px;
+        accessible-label: "Editable source code";
+    }
+    Rectangle {
+        visible: root.navigation-needed;
+        x: parent.width - 87px; y: 7px; width: 72px; height: 121px;
+        background: #111315;
+        VerticalLayout {
+            x: 5px; y: 4px; width: parent.width - 10px; spacing: 2px;
+            for row[index] in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27]: Rectangle {
+                height: 2px; width: 26px + mod(index * 17, 37) * 1px;
+                background: mod(index, 4) == 0 ? #8c6c3a : #434a4f;
+            }
+        }
+        Rectangle { x: 0px; y: 43px; width: parent.width; height: 47px; border-width: 1px; border-color: #41474c; background: #50555a16; }
+    }
+    Rectangle { visible: root.navigation-needed; x: parent.width - 5px; y: 4px; width: 3px; height: parent.height - 8px; background: #171a1c;
+        Rectangle { width: parent.width; height: parent.height * 0.4; background: #3c4247; }
+    }
+}
+
+component TerminalPanel inherits Rectangle {
+    in property <[TerminalRecord]> lines;
+    in-out property <int> selected-tab: 0;
+    callback close-requested();
+    height: ForgeTheme.terminal-height;
+    background: ForgeTheme.terminal;
+    border-width: 1px; border-color: ForgeTheme.border;
+    Rectangle {
+        x: 0px; y: 0px; width: parent.width; height: 31px; background: #16191b;
+        PanelRule { y: 30px; width: parent.width; background: #252a2e; }
+        HorizontalLayout {
+            x: 12px; width: 300px; height: parent.height; spacing: 0px;
+            for tab[index] in ["TERMINAL", "PROBLEMS", "OUTPUT", "LOGS"]: Rectangle {
+                width: index == 1 ? 78px : 65px;
+                background: root.selected-tab == index ? #202428 : tab-pointer.pressed ? #272b2e : tab-pointer.has-hover ? #1d2124 : #00000000;
+                animate background { duration: 110ms; }
+                Text { text: tab + (index == 1 ? "  2" : ""); color: root.selected-tab == index ? #d8dcdf : #767e85; font-family: AtlasTypography.font-sans; font-size: 9px; letter-spacing: 0.4px; horizontal-alignment: center; vertical-alignment: center; }
+                if root.selected-tab == index: Rectangle { y: parent.height - 1px; x: 8px; width: parent.width - 16px; height: 1px; background: ForgeTheme.accent; }
+                accessible-role: AccessibleRole.tab; accessible-label: tab;
+                accessible-action-default => { root.selected-tab = index; }
+                tab-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.selected-tab = index; } }
+            }
+        }
+        AtlasIcon { x: parent.width - 112px; y: 10px; size: 11px; name: IconName.add; icon-color: #767e85; }
+        AtlasIcon { x: parent.width - 82px; y: 10px; size: 11px; name: IconName.layers; icon-color: #767e85; }
+        AtlasIcon { x: parent.width - 52px; y: 10px; size: 11px; name: IconName.grid; icon-color: #767e85; }
+        Rectangle { x: parent.width - 29px; width: 29px; height: parent.height; background: close-pointer.pressed ? #39292a : close-pointer.has-hover ? #2e2325 : #00000000;
+            animate background { duration: 110ms; }
+            AtlasIcon { x: 9px; y: 10px; size: 11px; name: IconName.close; icon-color: #767e85; }
+            accessible-role: AccessibleRole.button; accessible-label: "Close bottom panel";
+            accessible-action-default => { root.close-requested(); }
+            close-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.close-requested(); } }
+        }
+    }
+    if root.selected-tab == 0: VerticalLayout {
+        x: 15px; y: 41px; width: parent.width - 30px; spacing: 0px;
+        for line in root.lines: Text {
+            height: 17px; text: line.text == "" ? " " : line.text;
+            color: line.tone == 2 ? ForgeTheme.success : line.tone == 1 ? #d3d7da : #899198;
+            font-family: AtlasTypography.font-mono; font-size: 10px; vertical-alignment: center;
+        }
+        Rectangle { width: 6px; height: 12px; background: #9ba2a7; }
+    }
+    if root.selected-tab != 0: Text {
+        y: 31px; width: parent.width; height: parent.height - 31px;
+        text: (root.selected-tab == 1 ? "Problems" : root.selected-tab == 2 ? "Output" : "Logs") + " panel · No active entries";
+        color: #565f66; font-family: AtlasTypography.font-mono; font-size: 10px;
+        horizontal-alignment: center; vertical-alignment: center;
+    }
+}
+
+component PropertiesInspector inherits Rectangle {
+    in property <bool> outline: false;
+    callback select-tab(bool);
+    background: ForgeTheme.panel;
+    Rectangle {
+        x: 0px; y: 0px; width: parent.width; height: 36px; background: ForgeTheme.panel;
+        PanelRule { y: 35px; width: parent.width; }
+        Rectangle { width: parent.width / 2; height: parent.height;
+            background: !root.outline ? #202428 : properties-pointer.pressed ? #272b2e : properties-pointer.has-hover ? #1d2124 : #00000000;
+            animate background { duration: 110ms; }
+            Text { text: "PROPERTIES"; color: !root.outline ? #d6dade : #6f777e; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; letter-spacing: 0.7px; horizontal-alignment: center; vertical-alignment: center; }
+            if !root.outline: Rectangle { y: 35px; width: parent.width; height: 1px; background: ForgeTheme.accent; }
+            accessible-role: AccessibleRole.tab; accessible-label: "Properties";
+            accessible-action-default => { root.select-tab(false); }
+            properties-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.select-tab(false); } }
+        }
+        Rectangle { x: parent.width / 2; width: parent.width / 2; height: parent.height;
+            background: root.outline ? #202428 : outline-pointer.pressed ? #272b2e : outline-pointer.has-hover ? #1d2124 : #00000000;
+            animate background { duration: 110ms; }
+            Text { text: "OUTLINE"; color: root.outline ? #d6dade : #6f777e; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; letter-spacing: 0.7px; horizontal-alignment: center; vertical-alignment: center; }
+            if root.outline: Rectangle { y: 35px; width: parent.width; height: 1px; background: ForgeTheme.accent; }
+            accessible-role: AccessibleRole.tab; accessible-label: "Outline";
+            accessible-action-default => { root.select-tab(true); }
+            outline-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.select-tab(true); } }
+        }
+    }
+    if !root.outline: Rectangle {
+        y: 36px; width: parent.width; height: parent.height - 36px;
+        Rectangle { x: 0px; y: 0px; height: 63px; width: parent.width; border-width: 1px; border-color: ForgeTheme.border-soft;
+            Rectangle { x: 15px; y: 18px; width: 31px; height: 31px; border-width: 1px; border-color: #5f4828; background: #2a231a;
+                MonoLabel { width: parent.width; text: "PB"; color: ForgeTheme.accent; horizontal-alignment: center; }
+            }
+            Text { x: 55px; y: 17px; text: "PrimaryButton"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+            Text { x: 55px; y: 34px; text: "Atlas Component"; color: #697179; font-family: AtlasTypography.font-sans; font-size: 8px; }
+            ForgeStatusDot { x: parent.width - 21px; y: 27px; label: "Component valid"; tone: BadgeTone.healthy; indicator-color: ForgeTheme.success; }
+        }
+        MicroLabel { x: 12px; y: 70px; text: "LAYOUT"; }
+        for field[index] in ["Width", "Height", "Spacing"]: Rectangle {
+            y: 96px + index * 41px; x: 12px; width: parent.width - 24px; height: 35px;
+            Text { width: 70px; text: field; color: #8d949a; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+            FieldFrame { x: 70px; y: 5px; width: parent.width - 70px; height: 25px; text: index == 0 ? "128                 px" : index == 1 ? "36                  px" : "Medium                    ⌄"; }
+        }
+        PanelRule { x: 0px; y: 224px; width: parent.width; background: ForgeTheme.border-soft; }
+        MicroLabel { x: 12px; y: 233px; text: "APPEARANCE"; }
+        for field[index] in ["Variant", "Enabled", "Label"]: Rectangle {
+            y: 259px + index * 41px; x: 12px; width: parent.width - 24px; height: 35px;
+            Text { width: 70px; text: field; color: #8d949a; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+            if index != 1: FieldFrame { x: 70px; y: 5px; width: parent.width - 70px; height: 25px; text: index == 0 ? "Primary                    ⌄" : "Run Task"; }
+            if index == 1: ForgeSwitch {
+                x: parent.width - 28px; y: 10px; width: 28px; height: 15px;
+                label: "Enabled"; checked: true;
+                track-width: 28px; track-height: 15px; thumb-size: 11px;
+                track-background: #725223;
+            }
+        }
+        PanelRule { x: 0px; y: 389px; width: parent.width; background: ForgeTheme.border-soft; }
+        MicroLabel { x: 12px; y: 398px; text: "IDENTITY"; }
+        Rectangle { y: 424px; x: 12px; width: parent.width - 24px; height: 35px;
+            Text { width: 70px; text: "Element ID"; color: #8d949a; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+            FieldFrame { x: 70px; y: 5px; width: parent.width - 70px; height: 25px; text: "run-button"; mono: true; }
+        }
+    }
+    if root.outline: VerticalLayout {
+        y: 44px; width: parent.width; spacing: 0px;
+        for row[index] in ["⌄  AppWindow", "   ⌄  Toolbar", "        PrimaryButton", "   ›  Workspace", "   ›  Terminal"]: Rectangle {
+            height: 27px; background: index == 2 ? #24231f : #00000000;
+            Text { x: 10px; text: row; color: index == 2 ? #e2bd78 : #939aa0; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; }
+        }
+    }
+}
+
+component DependencyInspector inherits Rectangle {
+    in property <DependencyRecord> dependency;
+    background: ForgeTheme.panel;
+    Rectangle { x: 0px; y: 0px; width: parent.width; height: 36px; border-width: 1px; border-color: ForgeTheme.border;
+        AtlasIcon { x: 11px; y: 12px; size: 13px; name: IconName.layers; icon-color: ForgeTheme.accent; }
+        MicroLabel { x: 31px; text: "PACKAGE DETAILS"; color: #9ba2a8; }
+    }
+    Rectangle { x: 18px; y: 63px; width: 39px; height: 39px; border-width: 1px; border-color: #725527; background: #292218;
+        MonoLabel { width: parent.width; text: root.dependency.name == "serde" ? "SE" : "SL"; color: ForgeTheme.accent; horizontal-alignment: center; }
+    }
+    MonoLabel { x: 18px; y: 112px; text: root.dependency.name; color: ForgeTheme.text; font-size: 17px; }
+    Text { x: 18px; y: 139px; width: parent.width - 36px; text: root.dependency.description; color: #747c83; font-family: AtlasTypography.font-sans; font-size: 9px; wrap: word-wrap; }
+    PanelRule { x: 18px; y: 176px; width: parent.width - 36px; background: #252a2e; }
+    for pair[index] in ["CURRENT VERSION", "LATEST VERSION", "RELEASE DATE", "COMPATIBILITY"]: Rectangle {
+        x: 18px; y: 177px + index * 45px; width: parent.width - 36px; height: 45px;
+        PanelRule { y: parent.height - 1px; width: parent.width; background: #252a2e; }
+        MicroLabel { y: 5px; text: pair; }
+        MonoLabel { y: 21px; text: index == 0 ? root.dependency.installed : index == 1 ? root.dependency.latest : index == 2 ? "Aug 28, 2026" : "● Compatible"; color: index == 3 ? ForgeTheme.success : #bdc2c6; }
+    }
+    MicroLabel { x: 18px; y: 371px; text: "RELEASE NOTES"; }
+    Text { x: 18px; y: 392px; width: parent.width - 36px; height: 45px; text: "Performance improvements, refined renderer behavior, and updated platform APIs."; color: #9ba2a7; font-family: AtlasTypography.font-sans; font-size: 9px; wrap: word-wrap; }
+    MonoLabel { x: 18px; y: 448px; text: "atlas-ui ─ " + root.dependency.name + " ─ core"; color: #a8afb4; }
+    ForgeButton { x: 18px; y: 475px; width: parent.width - 36px; height: 36px; text: "Prepare Upgrade"; show-icon: true; icon-name: IconName.play; accent: true; }
+}
+
+component DependenciesView inherits Rectangle {
+    in property <[DependencyRecord]> dependencies;
+    in-out property <int> selected-dependency;
+    background: ForgeTheme.activity;
+    MicroLabel { x: 35px; y: 30px; text: "PROJECT / DEPENDENCIES"; }
+    Text { x: 35px; y: 49px; text: "Crate dependencies"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 22px; font-weight: 700; letter-spacing: -0.6px; }
+    Text { x: 35px; y: 82px; text: "Direct packages defined in Cargo.toml"; color: #737c83; font-family: AtlasTypography.font-sans; font-size: 10px; }
+    ForgeButton { x: parent.width - 158px; y: 55px; width: 123px; text: "Check for updates"; show-icon: true; icon-name: IconName.refresh; }
+    Rectangle {
+        x: 35px; y: 121px; width: parent.width - 70px; height: 341px;
+        border-width: 1px; border-color: #2b3034; background: #141719;
+        Rectangle { x: 0px; y: 0px; width: parent.width; height: 35px; background: #191c1f;
+            MicroLabel { x: 14px; width: parent.width * 0.42; text: "PACKAGE"; }
+            MicroLabel { x: parent.width * 0.45; text: "INSTALLED"; }
+            MicroLabel { x: parent.width * 0.60; text: "LATEST"; }
+            MicroLabel { x: parent.width * 0.75; text: "STATUS"; }
+            PanelRule { y: parent.height - 1px; width: parent.width; }
+        }
+        VerticalLayout {
+            y: 35px; width: parent.width; height: 305px; spacing: 0px;
+            for dep[index] in root.dependencies: Rectangle {
+                height: 61px; background: index == root.selected-dependency ? #29261f : dep-pointer.pressed ? #292a26 : dep-pointer.has-hover ? #1e2224 : #141719;
+                animate background { duration: 110ms; }
+                if index < root.dependencies.length - 1: PanelRule { y: parent.height - 1px; width: parent.width; background: #24292d; }
+                AtlasIcon { x: 14px; y: 20px; size: 16px; name: IconName.layers; icon-color: ForgeTheme.accent; }
+                MonoLabel { x: 40px; y: 9px; text: dep.name; color: #d4d8db; }
+                Text { x: 40px; y: 29px; text: dep.description; color: #667078; font-family: AtlasTypography.font-sans; font-size: 8px; }
+                MonoLabel { x: parent.width * 0.45; text: dep.installed; }
+                MonoLabel { x: parent.width * 0.60; text: dep.latest; }
+                Text { x: parent.width * 0.75; text: dep.status; color: dep.update ? ForgeTheme.warning : ForgeTheme.success; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                AtlasIcon { x: parent.width - 26px; y: 24px; size: 11px; name: IconName.chevron-right; icon-color: #555d64; }
+                accessible-role: AccessibleRole.button; accessible-label: dep.name;
+                accessible-action-default => { root.selected-dependency = index; }
+                dep-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.selected-dependency = index; } }
+            }
+        }
+    }
+}
+
+export component Workspace inherits Rectangle {
+    in property <int> current-page;
+    in property <string> capture-state;
+    in property <[CodeRecord]> code-lines;
+    in property <[TerminalRecord]> terminal-lines;
+    in property <[DependencyRecord]> dependencies;
+    in-out property <int> selected-dependency: 0;
+    in-out property <int> terminal-tab: 0;
+    in-out property <bool> terminal-open: true;
+    in-out property <bool> inspector-outline: false;
+    in-out property <string> selected-file: "main.rs";
+    in-out property <bool> open-main: true;
+    in-out property <bool> open-app: true;
+    in-out property <bool> open-cargo: true;
+    in-out property <bool> open-card: false;
+    in-out property <bool> open-preview: false;
+    in-out property <string> preview-file;
+    background: ForgeTheme.canvas;
+
+    if root.current-page == 0 || root.current-page == 3: Rectangle {
+        x: 0px; y: 0px; width: parent.width - ForgeTheme.inspector-width; height: parent.height;
+        background: ForgeTheme.canvas;
+        EditorTabs {
+            x: 0px; y: 0px; width: parent.width; height: ForgeTheme.tabs-height;
+            selected-file <=> root.selected-file;
+            open-main <=> root.open-main; open-app <=> root.open-app; open-cargo <=> root.open-cargo;
+            open-card <=> root.open-card; open-preview <=> root.open-preview; preview-file <=> root.preview-file;
+            select-file(file) => { root.selected-file = file; }
+            close-file(file) => {
+                if (file == "main.rs") { root.open-main = false; }
+                if (file == "app.slint") { root.open-app = false; }
+                if (file == "Cargo.toml") { root.open-cargo = false; }
+                if (file == "card.rs") { root.open-card = false; }
+                if (file == root.preview-file) { root.open-preview = false; }
+                if (root.selected-file == file) {
+                    root.selected-file = root.open-main ? "main.rs"
+                        : root.open-app ? "app.slint"
+                        : root.open-cargo ? "Cargo.toml"
+                        : root.open-card ? "card.rs"
+                        : root.open-preview ? root.preview-file : "";
+                }
+            }
+        }
+        if root.current-page == 0: Rectangle {
+            y: ForgeTheme.tabs-height; width: parent.width; height: parent.height - ForgeTheme.tabs-height;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 27px; background: ForgeTheme.canvas; border-width: 1px; border-color: #20252a;
+                Text { x: 14px; width: parent.width - 28px; height: parent.height; text: root.selected-file == "" ? "No editor open" : "atlas-ui   ›   src   ›   " + root.selected-file; color: #70787f; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+            }
+            if root.selected-file != "": CodeEditor { x: 0px; y: 27px; width: parent.width; height: parent.height - 27px - (root.terminal-open ? ForgeTheme.terminal-height : 0px); lines: root.code-lines; file-name: root.selected-file; }
+            if root.selected-file == "": Text { x: 0px; y: 27px; width: parent.width; height: parent.height - 27px - (root.terminal-open ? ForgeTheme.terminal-height : 0px); text: "Select a file from Explorer to open an editor"; color: #596168; font-family: AtlasTypography.font-sans; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+            if root.terminal-open: TerminalPanel { x: 0px; y: parent.height - ForgeTheme.terminal-height; width: parent.width; lines: root.terminal-lines; selected-tab <=> root.terminal-tab; close-requested => { root.terminal-open = false; } }
+        }
+        if root.current-page == 3: DependenciesView { x: 0px; y: ForgeTheme.tabs-height; width: parent.width; height: parent.height - ForgeTheme.tabs-height; dependencies: root.dependencies; selected-dependency <=> root.selected-dependency; }
+    }
+    if root.current-page == 0: PropertiesInspector {
+        x: parent.width - ForgeTheme.inspector-width; width: ForgeTheme.inspector-width; height: parent.height;
+        outline: root.inspector-outline; select-tab(value) => { root.inspector-outline = value; }
+    }
+    if root.current-page == 3: DependencyInspector {
+        x: parent.width - ForgeTheme.inspector-width; width: ForgeTheme.inspector-width; height: parent.height;
+        dependency: root.dependencies[root.selected-dependency];
+    }
+}

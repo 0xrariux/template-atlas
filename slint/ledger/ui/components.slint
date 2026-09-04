@@ -1,0 +1,247 @@
+import {
+    AtlasButton, AtlasStatusIndicator, AtlasSwitch,
+    AtlasIcon, IconName, BadgeTone, Density, Surface, AtlasTypography, ButtonTone, ValueTone
+} from "@atlas-ui/stable.slint";
+import { ActionArea, AtlasProgressBar, ProgressTone, AtlasChartFrame, AtlasMetric } from "@atlas-ui/preview-nonresponsive.slint";
+import { LedgerTheme } from "theme.slint";
+
+export component LedgerSurface inherits Surface {
+    density: Density.compact;
+    raised: false;
+    background: LedgerTheme.surface;
+    border-color: LedgerTheme.border;
+    border-width: 1px;
+    border-radius: 2px;
+}
+
+export component LedgerButton inherits AtlasButton {
+    in property <bool> accent: false;
+    density: Density.compact;
+    height: 32px;
+    border-radius: 2px;
+    tone: root.accent ? ButtonTone.primary : ButtonTone.neutral;
+    border-color: root.accent ? LedgerTheme.green : LedgerTheme.border;
+    background: root.accent ? (root.pressed ? #17483c : root.hovered ? #1b5144 : LedgerTheme.green)
+        : (root.pressed ? #e0ddd5 : root.hovered ? #efede7 : LedgerTheme.surface);
+}
+
+export component SectionLabel inherits Text {
+    height: 15px;
+    color: LedgerTheme.muted;
+    font-family: AtlasTypography.font-mono;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    vertical-alignment: center;
+}
+
+export component EditorialTitle inherits Text {
+    color: LedgerTheme.text;
+    font-family: "Georgia";
+    font-size: 35px;
+    font-weight: 400;
+    vertical-alignment: center;
+}
+
+export component LedgerStatus inherits Rectangle {
+    in property <string> label;
+    in property <int> tone: 0;
+    in property <bool> upper: false;
+    in property <color> tone-color: root.tone == 0 ? LedgerTheme.positive : root.tone == 1 ? LedgerTheme.gold : LedgerTheme.negative;
+    height: 17px;
+    width: 86px;
+    AtlasStatusIndicator {
+        x: 0px; y: 5px; width: 6px; height: 6px;
+        label: root.label;
+        tone: root.tone == 0 ? BadgeTone.healthy : root.tone == 1 ? BadgeTone.warning : BadgeTone.danger;
+        indicator-color: root.tone-color;
+    }
+    Text {
+        x: 12px; width: parent.width - 12px;
+        text: root.label;
+        color: root.tone-color;
+        font-family: AtlasTypography.font-sans;
+        font-size: 9px;
+        font-weight: 600;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+}
+
+export component AssetMark inherits Rectangle {
+    in property <string> symbol;
+    in property <int> tone: 0;
+    in property <color> tone-color: root.tone == 0 ? #205c4d : root.tone == 1 ? #557a68 : root.tone == 2 ? #829b89 : root.tone == 3 ? #b6924b : #c5ad79;
+    width: 29px; height: 29px;
+    border-radius: 999px; background: root.tone-color;
+    Text { text: root.symbol; color: #ffffff; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+}
+
+export component LedgerMeter inherits Rectangle {
+    in property <float> value;
+    in property <color> meter-color: LedgerTheme.green;
+    height: 3px;
+    AtlasProgressBar {
+        width: parent.width; height: parent.height;
+        value: root.value; maximum: 100; show-labels: false;
+        track-height: parent.height; track-radius: 0px;
+        track-color: #e1ded6; indicator-color: root.meter-color; tone: ProgressTone.neutral;
+    }
+}
+
+export component ToolField inherits Rectangle {
+    in property <string> text;
+    in property <IconName> icon-name: IconName.none;
+    height: 32px;
+    border-width: 1px; border-color: LedgerTheme.border; border-radius: 2px; background: LedgerTheme.surface;
+    if root.icon-name != IconName.none: AtlasIcon { x: 9px; y: 10px; size: 12px; name: root.icon-name; icon-color: LedgerTheme.muted; }
+    Text { x: root.icon-name == IconName.none ? 10px : 29px; width: parent.width - self.x - 9px; text: root.text; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; overflow: elide; }
+}
+
+// Search fields are intentionally local UI state for the template. They accept
+// text, but do not filter the demo models until a product integration owns that
+// behavior.
+export component LedgerSearchField inherits Rectangle {
+    in-out property <string> value;
+    in property <string> placeholder-text;
+    in property <length> right-inset: 9px;
+    in property <string> accessible-name: root.placeholder-text;
+    out property <bool> focused: editor.has-focus;
+    height: 32px;
+    clip: true;
+    border-width: 1px;
+    border-color: root.focused ? LedgerTheme.green : LedgerTheme.border;
+    border-radius: 2px;
+    background: LedgerTheme.surface;
+
+    AtlasIcon {
+        x: 9px; y: 10px; size: 12px;
+        name: IconName.search;
+        icon-color: root.focused ? LedgerTheme.green : LedgerTheme.muted;
+    }
+    editor := TextInput {
+        x: 29px; y: 1px;
+        width: parent.width - self.x - root.right-inset;
+        height: parent.height - 2px;
+        text <=> root.value;
+        single-line: true;
+        color: LedgerTheme.text;
+        selection-foreground-color: LedgerTheme.surface;
+        selection-background-color: LedgerTheme.green;
+        font-family: AtlasTypography.font-sans;
+        font-size: 10px;
+        vertical-alignment: center;
+        accessible-label: root.accessible-name;
+    }
+    Text {
+        x: 29px; y: 1px;
+        width: parent.width - self.x - root.right-inset;
+        height: parent.height - 2px;
+        visible: root.value == "" && !root.focused;
+        text: root.placeholder-text;
+        color: #96958e;
+        font-family: AtlasTypography.font-sans;
+        font-size: 10px;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+}
+
+export component LedgerTabs inherits Rectangle {
+    in property <[string]> labels;
+    in-out property <int> selected-index: 0;
+    callback selected(int);
+    height: 28px;
+    border-width: 1px; border-color: LedgerTheme.border; border-radius: 2px; background: #efede7;
+    HorizontalLayout {
+        x: 1px; y: 1px; width: parent.width - 2px; height: parent.height - 2px;
+        spacing: 0px;
+        for label[index] in root.labels: Rectangle {
+            background: root.selected-index == index ? LedgerTheme.surface : #00000000;
+            if index > 0: Rectangle { x: 0px; y: 0px; width: 1px; height: parent.height; background: LedgerTheme.border; }
+            Text { width: parent.width; text: label; color: root.selected-index == index ? LedgerTheme.text : LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: root.selected-index == index ? 600 : 400; horizontal-alignment: center; vertical-alignment: center; }
+            action := ActionArea { selected: root.selected-index == index; accessible-name: label; activated => { root.selected-index = index; root.selected(index); } }
+        }
+    }
+}
+
+export component PageHeading inherits Rectangle {
+    in property <string> eyebrow;
+    in property <string> title;
+    in property <string> subtitle;
+    height: 96px;
+    SectionLabel { x: 0px; y: 0px; width: parent.width; text: root.eyebrow; color: LedgerTheme.green; }
+    EditorialTitle { x: 0px; y: 18px; width: parent.width; height: 39px; text: root.title; }
+    Text { x: 0px; y: 63px; width: parent.width; height: 19px; text: root.subtitle; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 12px; vertical-alignment: center; }
+}
+
+export component SummaryCell inherits AtlasMetric {
+    in property <string> detail;
+    in property <bool> positive: false;
+    meta: root.detail;
+    tone: root.positive ? ValueTone.positive : ValueTone.neutral;
+    background: LedgerTheme.surface;
+    content-inset: 16px;
+    label-y: 12px; label-height: 15px;
+    value-y: 31px; value-height: 27px;
+    meta-y: 63px; meta-height: 17px;
+    label-font-family: AtlasTypography.font-mono;
+    value-font-family: "Georgia";
+    meta-font-family: AtlasTypography.font-sans;
+    label-font-size: 10px; value-font-size: 18px; meta-font-size: 10px;
+    label-font-weight: 600; value-font-weight: 400;
+    label-letter-spacing: 1px;
+    label-color: LedgerTheme.muted;
+    value-color: root.positive ? LedgerTheme.positive : LedgerTheme.text;
+    meta-color: LedgerTheme.muted;
+}
+
+export component LedgerChart inherits AtlasChartFrame {
+    in property <bool> alternate: false;
+    in property <int> grid-lines: 4;
+    label: "Ledger portfolio performance";
+    description: "Illustrative portfolio value over the selected period";
+    horizontal-lines: root.grid-lines; vertical-lines: 0; grid-line-width: 1px;
+    horizontal-line-color: LedgerTheme.border-soft; plot-background: LedgerTheme.surface;
+    // Both the filled series and its stroke are native Slint paths. Keeping a
+    // fixed viewbox makes the series scale across every Ledger viewport.
+    Path {
+        x: 0px; y: 3px; width: root.width; height: root.height - 6px;
+        viewbox-width: 720; viewbox-height: 190;
+        fill: #205c4d16; stroke: #00000000;
+        MoveTo { x: 0; y: 190; }
+        LineTo { x: 0; y: root.alternate ? 170 : 166; }
+        LineTo { x: 60; y: root.alternate ? 163 : 158; }
+        LineTo { x: 120; y: root.alternate ? 151 : 162; }
+        LineTo { x: 180; y: root.alternate ? 156 : 147; }
+        LineTo { x: 240; y: root.alternate ? 143 : 135; }
+        LineTo { x: 300; y: root.alternate ? 129 : 141; }
+        LineTo { x: 360; y: root.alternate ? 135 : 119; }
+        LineTo { x: 420; y: root.alternate ? 119 : 104; }
+        LineTo { x: 480; y: root.alternate ? 98 : 111; }
+        LineTo { x: 540; y: root.alternate ? 107 : 88; }
+        LineTo { x: 600; y: root.alternate ? 84 : 73; }
+        LineTo { x: 660; y: root.alternate ? 61 : 48; }
+        LineTo { x: 720; y: root.alternate ? 35 : 22; }
+        LineTo { x: 720; y: 190; }
+        Close { }
+    }
+    Path {
+        x: 0px; y: 3px; width: root.width; height: root.height - 6px;
+        viewbox-width: 720; viewbox-height: 190;
+        fill: #00000000; stroke: LedgerTheme.green; stroke-width: 2px;
+        MoveTo { x: 0; y: root.alternate ? 170 : 166; }
+        LineTo { x: 60; y: root.alternate ? 163 : 158; }
+        LineTo { x: 120; y: root.alternate ? 151 : 162; }
+        LineTo { x: 180; y: root.alternate ? 156 : 147; }
+        LineTo { x: 240; y: root.alternate ? 143 : 135; }
+        LineTo { x: 300; y: root.alternate ? 129 : 141; }
+        LineTo { x: 360; y: root.alternate ? 135 : 119; }
+        LineTo { x: 420; y: root.alternate ? 119 : 104; }
+        LineTo { x: 480; y: root.alternate ? 98 : 111; }
+        LineTo { x: 540; y: root.alternate ? 107 : 88; }
+        LineTo { x: 600; y: root.alternate ? 84 : 73; }
+        LineTo { x: 660; y: root.alternate ? 61 : 48; }
+        LineTo { x: 720; y: root.alternate ? 35 : 22; }
+    }
+}

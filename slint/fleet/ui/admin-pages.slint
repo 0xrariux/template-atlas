@@ -1,0 +1,215 @@
+import { AtlasIcon, IconName, AtlasTypography } from "@atlas-ui/stable.slint";
+import { AtlasSettingsRow } from "@atlas-ui/preview-nonresponsive.slint";
+import { FleetTheme } from "theme.slint";
+import { WorkflowRecord } from "models.slint";
+import {
+    FleetSurface, PageHeading, FleetButton, FleetTabs, ToolField, InstrumentLabel,
+    SummaryCell, FleetStatus, FleetSwitch, FleetTableRow
+} from "components.slint";
+
+component WorkflowRow inherits FleetTableRow {
+    in property <WorkflowRecord> workflow;
+    row-label: root.workflow.name;
+    height: 54px;
+    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+    Rectangle { x: 11px; y: 13px; width: 27px; height: 27px; border-width: 1px; border-color: #2b4d57; background: #14242b;
+        AtlasIcon { x: 8px; y: 8px; size: 11px; name: root.workflow.tone == 1 ? IconName.warning : IconName.refresh; icon-color: root.workflow.tone == 1 ? FleetTheme.warning : FleetTheme.cyan; }
+    }
+    Text { x: 47px; width: parent.width * 0.23; text: root.workflow.name; color: #c4ced2; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 600; vertical-alignment: center; overflow: elide; }
+    Text { x: parent.width * 0.29; width: parent.width * 0.25; text: root.workflow.trigger; color: #607681; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+    Text { x: parent.width * 0.57; width: parent.width * 0.06; text: root.workflow.actions; color: #82959e; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Text { x: parent.width * 0.66; width: parent.width * 0.06; text: root.workflow.runs; color: #82959e; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Text { x: parent.width * 0.75; width: parent.width * 0.07; text: root.workflow.success; color: root.workflow.tone == 1 ? FleetTheme.warning : FleetTheme.green; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    FleetStatus { x: parent.width * 0.84; y: 19px; width: parent.width * 0.11; label: root.workflow.state; tone: root.workflow.tone == 2 ? 2 : 0; }
+    Text { x: 0px; width: parent.width - 11px; text: "•••"; color: #506671; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+}
+
+export component AutomationPage inherits Rectangle {
+    in property <[WorkflowRecord]> workflows;
+    in property <string> capture-state;
+    in-out property <int> tab: root.capture-state == "automation-run-history" ? 1 : 0;
+    in-out property <int> selected-workflow: 0;
+    in-out property <int> selected-run: 0;
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "AUTOMATION / FLEET WORKFLOWS"; title: "Automation"; subtitle: "Respond to demo fleet conditions with local workflows."; }
+        FleetButton { x: parent.width - 135px; y: 14px; width: 135px; text: "NEW WORKFLOW"; show-icon: true; icon-name: IconName.add; accent: true; }
+        GridLayout { y: 84px; width: parent.width; height: 86px; spacing: 0px;
+            SummaryCell { row:0; col:0; label:"ACTIVE WORKFLOWS"; value:"4"; detail:"1 DRAFT"; icon-name:IconName.refresh; }
+            SummaryCell { row:0; col:1; label:"RUNS TODAY"; value:"64"; detail:"61 SUCCESSFUL"; icon-name:IconName.play; tone-color:FleetTheme.green; }
+            SummaryCell { row:0; col:2; label:"SUCCESS RATE"; value:"95.3%"; detail:"+1.8% THIS WEEK"; icon-name:IconName.analytics; }
+            SummaryCell { row:0; col:3; label:"FAILED RUNS"; value:"3"; detail:"REQUIRES REVIEW"; icon-name:IconName.warning; tone-color:FleetTheme.warning; }
+        }
+        FleetSurface { y: 179px; width: parent.width; height: 377px;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 47px; background: #151e24;
+                FleetTabs { x: 10px; y: 8px; width: 210px; labels: ["WORKFLOWS", "RUN HISTORY"]; selected-index <=> root.tab; }
+                ToolField { x: parent.width - 240px; y: 8px; width: 230px; text: root.tab == 0 ? "Search workflows..." : "Search runs..."; icon-name: IconName.search; }
+            }
+            if root.tab == 0: Rectangle {
+                y: 47px; width: parent.width; height: parent.height - 47px;
+                Rectangle { x: 0px; y: 0px; width: parent.width; height: 29px; background: #151e24;
+                    InstrumentLabel { x: 11px; width: parent.width * 0.27; text: "WORKFLOW"; }
+                    InstrumentLabel { x: parent.width * 0.29; width: parent.width * 0.25; text: "TRIGGER"; }
+                    InstrumentLabel { x: parent.width * 0.57; width: parent.width * 0.06; text: "ACTIONS"; }
+                    InstrumentLabel { x: parent.width * 0.66; width: parent.width * 0.06; text: "RUNS"; }
+                    InstrumentLabel { x: parent.width * 0.75; width: parent.width * 0.07; text: "SUCCESS"; }
+                    InstrumentLabel { x: parent.width * 0.84; width: parent.width * 0.11; text: "STATE"; }
+                }
+                for workflow[index] in root.workflows: WorkflowRow {
+                    y: 29px + index * 54px; width: parent.width;
+                    workflow: workflow; selected: root.selected-workflow == index;
+                    clicked => { root.selected-workflow = index; }
+                }
+            }
+            if root.tab == 1: Rectangle {
+                y: 47px; width: parent.width; height: parent.height - 47px;
+                for run in 6: FleetTableRow {
+                    y: run * 53px; width: parent.width; height: 53px;
+                    row-label: "Run at 14:" + (38 - run * 5);
+                    selected: root.selected-run == run;
+                    clicked => { root.selected-run = run; }
+                    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+                    AtlasIcon { x: 13px; y: 20px; size: 12px; name: run == 2 ? IconName.warning : IconName.check; icon-color: run == 2 ? FleetTheme.warning : FleetTheme.green; }
+                    Text { x: 38px; y: 8px; width: parent.width - 280px; height: 16px; text: run == 0 ? "Restart degraded service" : run == 1 ? "Thermal protection" : run == 2 ? "Offline device recovery" : run == 3 ? "Nightly configuration backup" : run == 4 ? "Restart degraded service" : "Thermal protection"; color: #c0ccd1; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 600; vertical-alignment: center; }
+                    Text { x: 38px; y: 27px; width: parent.width - 280px; height: 14px; text: run == 2 ? "EDGE-DEMO-03 · step 4 failed" : "Demo run completed · all actions recorded"; color: FleetTheme.muted; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                    FleetStatus { x: parent.width - 225px; y: 18px; width: 85px; label: run == 2 ? "FAILED" : "SUCCESS"; tone: run == 2 ? 1 : 0; }
+                    Text { x: parent.width - 130px; width: 70px; text: (run + 1) + "m " + (run * 7 + 12) + "s"; color: #607681; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                    Text { x: 0px; width: parent.width - 13px; text: "14:" + (38 - run * 5); color: #607681; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                }
+            }
+        }
+        FleetSurface { y: 565px; width: parent.width; height: 116px;
+            InstrumentLabel { x: 13px; y: 11px; width: 220px; text: "WORKFLOW BUILDER / QUICK START"; }
+            Rectangle { x: 13px; y: 39px; width: parent.width - 144px; height: 62px;
+                for step in 3: Rectangle { x: step * (parent.width / 3); width: parent.width / 3 - 20px; height: parent.height;
+                    Rectangle { x: 0px; y: 12px; width: 25px; height: 25px; border-width: 1px; border-color: #2e515b; background: #14242b;
+                        Text { x: 0px; width: parent.width; text: step + 1; color: FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                    InstrumentLabel { x: 34px; y: 0px; width: parent.width - 34px; text: step == 0 ? "WHEN" : step == 1 ? "IF" : "THEN"; }
+                    Text { x: 34px; y: 18px; width: parent.width - 34px; height: 15px; text: step == 0 ? "Telemetry event" : step == 1 ? "Policy matches" : "Run action"; color: #b8c5ca; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 600; vertical-alignment: center; }
+                    Text { x: 34px; y: 36px; width: parent.width - 34px; height: 14px; text: step == 0 ? "Select a fleet signal" : step == 1 ? "Add conditions" : "Choose remediation"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    if step < 2: AtlasIcon { x: parent.width - 2px; y: 20px; size: 11px; name: IconName.chevron-right; icon-color: #45606c; }
+                }
+            }
+            FleetButton { x: parent.width - 123px; y: 54px; width: 110px; text: "OPEN BUILDER"; show-icon: true; icon-name: IconName.add; }
+        }
+    }
+}
+
+component SettingsNavItem inherits Rectangle {
+    in property <string> label;
+    in property <IconName> icon-name;
+    in property <bool> selected;
+    callback clicked();
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.label;
+    accessible-action-default => { root.clicked(); }
+    height: 38px; background: root.selected ? #17242a : pointer.has-hover ? #141f25 : #00000000;
+    if root.selected: Rectangle { x: parent.width - 2px; y: 0px; width: 2px; height: parent.height; background: FleetTheme.cyan; }
+    AtlasIcon { x: 10px; y: 13px; size: 12px; name: root.icon-name; icon-color: root.selected ? FleetTheme.cyan : #607681; }
+    Text { x: 32px; width: parent.width - 53px; text: root.label; color: root.selected ? #9fb4bd : #667c87; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    AtlasIcon { x: parent.width - 18px; y: 14px; size: 9px; name: IconName.chevron-right; icon-color: #506671; }
+    pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.clicked(); } }
+}
+
+component FleetSettingRow inherits AtlasSettingsRow {
+    in property <string> detail;
+    description: root.detail;
+    height: 58px;
+    title-y: 9px;
+    title-height: 16px;
+    description-y: 29px;
+    description-height: 15px;
+    title-color: #c3cfd4;
+    description-color: FleetTheme.muted;
+    title-font-size: 10px;
+    description-font-size: 9px;
+    title-font-weight: 600;
+}
+
+component ToggleSetting inherits FleetSettingRow {
+    in-out property <bool> checked: true;
+    content-right-inset: 80px;
+    FleetSwitch { x: parent.width - 31px; y: 20px; checked <=> root.checked; label: root.title; }
+}
+
+component FieldSetting inherits FleetSettingRow {
+    in property <string> value;
+    content-right-inset: 300px;
+    ToolField { x: parent.width - 270px; y: 14px; width: 270px; text: root.value; }
+}
+
+component SettingsSectionHeading inherits Rectangle {
+    in property <string> text;
+    height: 13px;
+    heading := InstrumentLabel { x: 0px; y: 0px; width: self.preferred-width; text: root.text; }
+    Rectangle {
+        x: heading.preferred-width + 14px; y: 6px;
+        width: max(0px, parent.width - self.x); height: 1px;
+        background: FleetTheme.border;
+    }
+}
+
+export component SettingsPage inherits Rectangle {
+    in property <string> capture-state;
+    in-out property <int> section: root.capture-state == "settings-telemetry" ? 2 : 0;
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "SYSTEM / FLEET PREFERENCES"; title: "Settings"; subtitle: "Configure the local Fleet demonstration environment."; }
+        FleetSurface { y: 84px; width: parent.width; height: parent.height - 84px;
+            Rectangle { x: 0px; y: 0px; width: 235px; height: parent.height; background: #10171d;
+                Rectangle { x: parent.width - 1px; y: 0px; width: 1px; height: parent.height; background: FleetTheme.border; }
+                InstrumentLabel { x: 10px; y: 15px; width: parent.width - 20px; text: "CONFIGURATION"; }
+                SettingsNavItem { x: 8px; y: 40px; width: parent.width - 16px; label: "Control Server"; icon-name: IconName.database; selected: root.section == 0; clicked => { root.section = 0; } }
+                SettingsNavItem { x: 8px; y: 78px; width: parent.width - 16px; label: "Device Discovery"; icon-name: IconName.search; selected: root.section == 1; clicked => { root.section = 1; } }
+                SettingsNavItem { x: 8px; y: 116px; width: parent.width - 16px; label: "Telemetry"; icon-name: IconName.activity; selected: root.section == 2; clicked => { root.section = 2; } }
+                SettingsNavItem { x: 8px; y: 154px; width: parent.width - 16px; label: "Notifications"; icon-name: IconName.bell; selected: root.section == 3; clicked => { root.section = 3; } }
+                SettingsNavItem { x: 8px; y: 192px; width: parent.width - 16px; label: "Agent Updates"; icon-name: IconName.download; selected: root.section == 4; clicked => { root.section = 4; } }
+                SettingsNavItem { x: 8px; y: 230px; width: parent.width - 16px; label: "Security"; icon-name: IconName.shield; selected: root.section == 5; clicked => { root.section = 5; } }
+                Rectangle { x: 15px; y: parent.height - 100px; width: parent.width - 30px; height: 83px; border-width: 1px; border-color: #263b44; background: #111b21;
+                    FleetStatus { x: 10px; y: 9px; width: 90px; label: "CONNECTED"; tone: 0; }
+                    Text { x: 10px; y: 33px; text: "Control Server"; color: #b9c6cb; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                    Text { x: 10px; y: 51px; width: parent.width - 20px; text: "control-01.example.invalid"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+                }
+            }
+            Rectangle {
+                x: 235px; width: parent.width - 235px; height: parent.height;
+                Rectangle { x: 26px; y: 22px; width: parent.width - 52px; height: 57px;
+                    InstrumentLabel { width: parent.width; text: root.section == 2 ? "TELEMETRY" : root.section == 0 ? "CONTROL SERVER" : "FLEET CONFIGURATION"; }
+                    Text { x: 0px; y: 18px; height: 20px; text: root.section == 2 ? "Telemetry collection" : root.section == 0 ? "Control server connection" : "Fleet preferences"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 650; vertical-alignment: center; }
+                    Text { x: 0px; y: 42px; text: root.section == 2 ? "Choose how demo devices report operational measurements." : root.section == 0 ? "Connection details for the simulated Fleet coordinator." : "Configure this local demonstration module."; color: #627782; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border; }
+                }
+                if root.section == 0: Rectangle {
+                    x: 26px; y: 95px; width: parent.width - 52px; height: 397px;
+                    SettingsSectionHeading { width: parent.width; text: "CONNECTION"; }
+                    FieldSetting { y: 19px; width: parent.width; title: "Server address"; detail: "Fleet coordinator endpoint"; value: "control-01.example.invalid"; }
+                    FieldSetting { y: 77px; width: parent.width; title: "Environment"; detail: "Active demonstration environment"; value: "Demo Environment  ⌄"; }
+                    ToggleSetting { y: 135px; width: parent.width; title: "Automatic reconnect"; detail: "Reconnect when the sample connection is interrupted"; checked: true; }
+                    SettingsSectionHeading { x: 0px; y: 219px; width: parent.width; text: "DISCOVERY"; }
+                    ToggleSetting { y: 238px; width: parent.width; title: "Local device discovery"; detail: "Discover sample agents on the demonstration network"; checked: true; }
+                    ToggleSetting { y: 296px; width: parent.width; title: "Heartbeat monitoring"; detail: "Monitor demo agent availability every 30 seconds"; checked: true; }
+                }
+                if root.section == 2: Rectangle {
+                    x: 26px; y: 95px; width: parent.width - 52px; height: 397px;
+                    SettingsSectionHeading { width: parent.width; text: "COLLECTION"; }
+                    ToggleSetting { y: 19px; width: parent.width; title: "Collect telemetry"; detail: "Receive CPU, memory, disk, network, and sensor samples"; checked: true; }
+                    FieldSetting { y: 77px; width: parent.width; title: "Sample interval"; detail: "Frequency for standard telemetry"; value: "10 seconds  ⌄"; }
+                    FieldSetting { y: 135px; width: parent.width; title: "Retention period"; detail: "Keep local sample history"; value: "7 days  ⌄"; }
+                    SettingsSectionHeading { x: 0px; y: 219px; width: parent.width; text: "DIAGNOSTICS"; }
+                    ToggleSetting { y: 238px; width: parent.width; title: "Extended diagnostics"; detail: "Include service and process-level samples"; checked: true; }
+                    ToggleSetting { y: 296px; width: parent.width; title: "Anonymous usage metrics"; detail: "This demo never sends telemetry outside the application"; checked: false; }
+                }
+                if root.section != 0 && root.section != 2: Rectangle {
+                    x: 26px; y: 95px; width: parent.width - 52px; height: 397px;
+                    SettingsSectionHeading { width: parent.width; text: "PREFERENCES"; }
+                    ToggleSetting { y: 19px; width: parent.width; title: "Enable module"; detail: "Use this simulated configuration section"; checked: true; }
+                    ToggleSetting { y: 77px; width: parent.width; title: "Show notifications"; detail: "Display local operational feedback"; checked: true; }
+                }
+                Rectangle { x: 26px; y: parent.height - 61px; width: parent.width - 52px; height: 45px;
+                    Rectangle { x: 0px; y: 0px; width: parent.width; height: 1px; background: FleetTheme.border; }
+                    Text { x: 0px; text: "CHANGES APPLY TO THIS DEMO ONLY"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    FleetButton { x: parent.width - 108px; y: 8px; width: 108px; text: "SAVE CHANGES"; accent: true; }
+                }
+            }
+        }
+    }
+}

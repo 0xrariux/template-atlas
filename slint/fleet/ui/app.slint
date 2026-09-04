@@ -1,0 +1,90 @@
+import { AtlasSettings, ThemeMode, Density, TypographyScale } from "@atlas-ui/stable.slint";
+import { AtlasScrollViewport } from "@atlas-ui/preview-nonresponsive.slint";
+import { FleetTheme } from "theme.slint";
+import { DeviceRecord, DeploymentRecord, LogRecord, IncidentRecord, WorkflowRecord } from "models.slint";
+import { FleetSidebar, FleetTopbar } from "shell.slint";
+import { FleetOverview } from "overview.slint";
+import { DevicesPage } from "device-page.slint";
+import { TopologyPage, DeploymentsPage } from "operations-pages.slint";
+import { MetricsPage, AlertsPage, LogsPage } from "monitor-pages.slint";
+import { AutomationPage, SettingsPage } from "admin-pages.slint";
+import { AddDeviceModal, RestartModal } from "overlays.slint";
+
+export {
+    AtlasSettings, ThemeMode, Density, TypographyScale,
+    DeviceRecord, DeploymentRecord, LogRecord, IncidentRecord, WorkflowRecord
+}
+
+export component App inherits Window {
+    title: "Atlas Fleet";
+    preferred-width: 1440px;
+    preferred-height: 900px;
+    min-width: 1180px;
+    min-height: 760px;
+    background: FleetTheme.canvas;
+
+    in-out property <int> current-page: 0;
+    in-out property <string> capture-state;
+    in property <[DeviceRecord]> devices;
+    in property <[DeploymentRecord]> deployments;
+    in property <[LogRecord]> logs;
+    in property <[IncidentRecord]> incidents;
+    in property <[WorkflowRecord]> workflows;
+    in-out property <bool> add-open: root.capture-state == "add-device";
+    in-out property <bool> restart-open: root.capture-state == "restart-confirmation";
+    private property <length> minimum-page-height: root.current-page == 0 ? 1260px
+        : root.current-page == 4 || root.current-page == 5 ? 850px : 760px;
+    private property <length> page-content-height: max(
+        root.minimum-page-height,
+        root.height - FleetTheme.topbar-height
+    );
+    private property <length> page-scroll-y: root.capture-state == "overview-lower" ? 590px
+        : root.capture-state == "overview-devices" || root.capture-state == "overview-list"
+        || root.capture-state == "overview-filter-online" || root.capture-state == "overview-filter-warning"
+        || root.capture-state == "overview-filter-offline" || root.capture-state == "overview-device-warning"
+        || root.capture-state == "overview-telemetry-memory" || root.capture-state == "overview-telemetry-24h"
+        || root.capture-state == "restart-confirmation" ? 175px : 0px;
+
+    FleetSidebar {
+        x: 0px; y: 0px; height: parent.height;
+        current-page <=> root.current-page;
+        navigate(page) => {
+            root.current-page = page;
+            root.page-scroll-y = 0px;
+            root.add-open = false;
+            root.restart-open = false;
+        }
+    }
+    Rectangle {
+        x: FleetTheme.sidebar-width; y: 0px;
+        width: parent.width - FleetTheme.sidebar-width; height: parent.height;
+        background: FleetTheme.canvas;
+        FleetTopbar { x: 0px; y: 0px; width: parent.width; current-page: root.current-page; add-device => { root.add-open = true; } }
+        page-scroll := AtlasScrollViewport {
+            y: FleetTheme.topbar-height; width: parent.width; height: parent.height - FleetTheme.topbar-height;
+            content-height: root.page-content-height;
+            viewport-y <=> root.page-scroll-y;
+            accessible-label: "Fleet page content";
+            Rectangle {
+                width: parent.width; height: root.page-content-height;
+                background: FleetTheme.canvas;
+                if root.current-page == 0: FleetOverview { x: 0px; y: 0px; width: parent.width; height: parent.height; devices: root.devices; incidents: root.incidents; capture-state: root.capture-state; restart => { root.restart-open = true; } }
+                if root.current-page == 1: DevicesPage { x: 0px; y: 0px; width: parent.width; height: parent.height; devices: root.devices; capture-state: root.capture-state; }
+                if root.current-page == 2: TopologyPage { x: 0px; y: 0px; width: parent.width; height: parent.height; }
+                if root.current-page == 3: DeploymentsPage { x: 0px; y: 0px; width: parent.width; height: parent.height; deployments: root.deployments; }
+                if root.current-page == 4: MetricsPage { x: 0px; y: 0px; width: parent.width; height: parent.height; devices: root.devices; capture-state: root.capture-state; }
+                if root.current-page == 5: AlertsPage { x: 0px; y: 0px; width: parent.width; height: parent.height; incidents: root.incidents; capture-state: root.capture-state; }
+                if root.current-page == 6: LogsPage { x: 0px; y: 0px; width: parent.width; height: parent.height; logs: root.logs; }
+                if root.current-page == 7: AutomationPage { x: 0px; y: 0px; width: parent.width; height: parent.height; workflows: root.workflows; capture-state: root.capture-state; }
+                if root.current-page == 8: SettingsPage { x: 0px; y: 0px; width: parent.width; height: parent.height; capture-state: root.capture-state; }
+            }
+        }
+    }
+    AddDeviceModal {
+        x: 0px; y: 0px; width: parent.width; height: parent.height;
+        open <=> root.add-open;
+        cancelled => { root.add-open = false; }
+        confirmed => { root.add-open = false; }
+    }
+    RestartModal { x: 0px; y: 0px; width: parent.width; height: parent.height; open <=> root.restart-open; cancelled => { root.restart-open = false; } confirmed => { root.restart-open = false; } }
+}

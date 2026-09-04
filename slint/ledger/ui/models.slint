@@ -1,0 +1,13 @@
+export struct AssetRecord {
+    symbol: string, name: string, balance: string, price: string, value: string,
+    change: string, allocation: string, allocation-value: int, network: string, tone: int,
+}
+export struct TransactionRecord {
+    kind: string, asset: string, amount: string, direction: string, party: string,
+    address: string, network: string, status: string, time: string, hash: string, tone: int,
+}
+export struct MarketRecord { pair: string, price: string, change: string, high: string, low: string, volume: string, tone: int }
+export struct AccountRecord { name: string, value: string, code: string, share: string }
+export struct ConnectionRecord { name: string, category: string, account: string, balance: string, state: string, sync: string, tone: int }
+export struct SecurityEventRecord { title: string, detail: string, actor: string, time: string, tone: int }
+export struct SignerRecord { name: string, initials: string, role: string, method: string, status: string, last: string, tone: int }

@@ -1,0 +1,135 @@
+import {
+    AtlasSettings, ThemeMode, Density, TypographyScale
+} from "@atlas-ui/stable.slint";
+import { ForgeTheme } from "theme.slint";
+import {
+    TreeRecord, CodeRecord, TerminalRecord, DependencyRecord, TaskRecord,
+    ExtensionRecord, SearchRecord, CommandRecord, ChangeRecord
+} from "models.slint";
+import { ActivityBar, ProjectSidebar, ProjectToolbar, StatusBar } from "shell.slint";
+import { Workspace } from "workspace.slint";
+import { ForgePages } from "pages.slint";
+import { ForgeCommandPalette } from "palette.slint";
+
+export {
+    AtlasSettings, ThemeMode, Density, TypographyScale,
+    TreeRecord, CodeRecord, TerminalRecord, DependencyRecord, TaskRecord,
+    ExtensionRecord, SearchRecord, CommandRecord, ChangeRecord
+}
+
+export component App inherits Window {
+    title: "Atlas Forge";
+    preferred-width: 1440px;
+    preferred-height: 900px;
+    min-width: 1040px;
+    min-height: 720px;
+    background: ForgeTheme.canvas;
+
+    in-out property <int> current-page: 0;
+    in-out property <string> capture-state;
+    in property <[TreeRecord]> tree-items;
+    in property <[CodeRecord]> code-lines;
+    in property <[TerminalRecord]> terminal-lines;
+    in property <[DependencyRecord]> dependencies;
+    in property <[TaskRecord]> tasks;
+    in property <[ExtensionRecord]> extensions;
+    in property <[SearchRecord]> search-results;
+    in property <[CommandRecord]> commands;
+    in property <[ChangeRecord]> changes;
+
+    in-out property <bool> palette-open: root.capture-state == "command-palette";
+    private property <int> selected-dependency: root.capture-state == "dependencies-selected-serde" ? 1 : 0;
+    private property <int> terminal-tab: root.capture-state == "explorer-problems" ? 1 : root.capture-state == "explorer-output" ? 2 : root.capture-state == "explorer-logs" ? 3 : 0;
+    private property <bool> terminal-open: root.capture-state != "explorer-terminal-closed";
+    private property <bool> inspector-outline: root.capture-state == "explorer-inspector-outline";
+    private property <string> selected-file: root.capture-state == "explorer-selected-tree-item" ? "card.rs"
+        : root.capture-state == "explorer-tabs-closed" ? "app.slint"
+        : root.capture-state == "explorer-preview-file" ? "button.rs" : "main.rs";
+    private property <bool> open-main: root.capture-state != "explorer-tabs-closed";
+    private property <bool> open-app: true;
+    private property <bool> open-cargo: root.capture-state != "explorer-tabs-closed";
+    private property <bool> open-card: root.capture-state == "explorer-selected-tree-item";
+    private property <bool> open-preview: root.capture-state == "explorer-preview-file";
+    private property <string> preview-file: root.capture-state == "explorer-preview-file" ? "button.rs" : "";
+
+    callback navigate-requested(int);
+
+    ActivityBar {
+        x: 0px; y: 0px; height: parent.height;
+        current-page: root.current-page;
+        navigate(page) => { root.navigate-requested(page); }
+    }
+    ProjectSidebar {
+        x: ForgeTheme.activity-width; y: 0px; height: parent.height;
+        current-page: root.current-page; tree-items: root.tree-items;
+        dependencies: root.dependencies; selected-dependency <=> root.selected-dependency;
+        selected-file <=> root.selected-file;
+        open-main <=> root.open-main; open-app <=> root.open-app; open-cargo <=> root.open-cargo;
+        open-card <=> root.open-card; open-preview <=> root.open-preview; preview-file <=> root.preview-file;
+        capture-state: root.capture-state;
+    }
+    Rectangle {
+        x: ForgeTheme.activity-width + ForgeTheme.sidebar-width;
+        y: 0px;
+        width: parent.width - ForgeTheme.activity-width - ForgeTheme.sidebar-width;
+        height: parent.height;
+        background: ForgeTheme.canvas;
+        ProjectToolbar {
+            x: 0px; y: 0px; width: parent.width; height: ForgeTheme.toolbar-height;
+            palette-requested => { root.palette-open = true; }
+            build-requested => { root.current-page = 0; root.terminal-open = true; root.terminal-tab = 0; }
+            run-requested => { root.current-page = 0; root.terminal-open = true; root.terminal-tab = 0; }
+        }
+        Rectangle {
+            y: ForgeTheme.toolbar-height;
+            width: parent.width;
+            height: parent.height - ForgeTheme.toolbar-height - ForgeTheme.status-height;
+            background: ForgeTheme.canvas;
+            if root.current-page == 0 || root.current-page == 3: Workspace {
+                width: parent.width; height: parent.height;
+                current-page: root.current-page; capture-state: root.capture-state;
+                code-lines: root.code-lines; terminal-lines: root.terminal-lines;
+                dependencies: root.dependencies; selected-dependency <=> root.selected-dependency;
+                terminal-tab <=> root.terminal-tab; terminal-open <=> root.terminal-open;
+                inspector-outline <=> root.inspector-outline;
+                selected-file <=> root.selected-file;
+                open-main <=> root.open-main; open-app <=> root.open-app; open-cargo <=> root.open-cargo;
+                open-card <=> root.open-card; open-preview <=> root.open-preview; preview-file <=> root.preview-file;
+            }
+            if root.current-page != 0 && root.current-page != 3: ForgePages {
+                width: parent.width; height: parent.height;
+                page: root.current-page; capture-state: root.capture-state;
+                search-results: root.search-results; changes: root.changes;
+                tasks: root.tasks; extensions: root.extensions;
+            }
+        }
+        StatusBar { y: parent.height - ForgeTheme.status-height; width: parent.width; }
+    }
+
+    ForgeCommandPalette {
+        width: parent.width; height: parent.height;
+        open <=> root.palette-open; forge-commands: root.commands;
+        close-requested => { root.palette-open = false; }
+        command-requested(command) => {
+            root.palette-open = false;
+            if (command == "Search Dependencies") { root.current-page = 3; }
+            if (command == "Open Settings") { root.current-page = 6; }
+            if (command == "Toggle Terminal") { root.current-page = 0; root.terminal-open = !root.terminal-open; }
+            if (command == "Build Project" || command == "Run Project") { root.current-page = 0; root.terminal-open = true; root.terminal-tab = 0; }
+        }
+    }
+    global-focus := FocusScope {
+        key-pressed(event) => {
+            if ((event.modifiers.control || event.modifiers.meta) && event.text == "k") {
+                root.palette-open = true;
+                return accept;
+            }
+            if (event.text == Key.Escape && root.palette-open) {
+                root.palette-open = false;
+                return accept;
+            }
+            return reject;
+        }
+    }
+    init => { global-focus.focus(); }
+}

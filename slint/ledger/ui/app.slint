@@ -1,0 +1,120 @@
+import { AtlasSettings, AtlasViewportTokens, ThemeMode, Density, TypographyScale } from "@atlas-ui/stable.slint";
+import { AtlasScrollbar } from "@atlas-ui/preview-nonresponsive.slint";
+import { LedgerTheme } from "theme.slint";
+import { AssetRecord, TransactionRecord, MarketRecord, AccountRecord, ConnectionRecord, SecurityEventRecord, SignerRecord } from "models.slint";
+import { LedgerSidebar, LedgerTopbar } from "shell.slint";
+import { PortfolioPage } from "portfolio.slint";
+import { TransactionsPage, MarketsPage, AccountsPage } from "data-pages.slint";
+import { AssetsPage, AnalyticsPage } from "secondary-pages.slint";
+import { ConnectionsPage, SecurityPage, SettingsPage } from "admin-pages.slint";
+import { NotificationsPanel, TransactionDrawer, TransferModal } from "overlays.slint";
+
+export {
+    AtlasSettings, ThemeMode, Density, TypographyScale,
+    AssetRecord, TransactionRecord, MarketRecord, AccountRecord,
+    ConnectionRecord, SecurityEventRecord, SignerRecord
+}
+
+export component App inherits Window {
+    title: "Atlas Ledger";
+    preferred-width: 1440px;
+    preferred-height: 900px;
+    min-width: 1180px;
+    min-height: 760px;
+    background: LedgerTheme.canvas;
+
+    callback sort-assets(int);
+
+    in-out property <int> current-page: 0;
+    in-out property <string> capture-state;
+    in property <[AssetRecord]> assets;
+    in property <[TransactionRecord]> transactions;
+    in property <[MarketRecord]> markets;
+    in property <[AccountRecord]> accounts;
+    in property <[ConnectionRecord]> connections;
+    in property <[SecurityEventRecord]> security-events;
+    in property <[SignerRecord]> signers;
+    in-out property <bool> notifications-open: root.capture-state == "portfolio-notifications";
+    in-out property <bool> drawer-open: root.capture-state == "transactions-drawer" || root.capture-state == "transactions-drawer-copied";
+    in-out property <bool> drawer-copied: root.capture-state == "transactions-drawer-copied";
+    in-out property <bool> transfer-open: root.capture-state == "transfer" || root.capture-state == "transfer-review";
+    in-out property <bool> transfer-review: root.capture-state == "transfer-review";
+    in-out property <int> selected-transaction: 0;
+    private property <length> page-content-height: root.current-page == 0 ? 1190px
+        : root.current-page == 1 ? 1150px
+        : root.current-page == 5 ? 1150px
+        : root.current-page == 6 ? 1130px
+        : root.current-page == 7 ? 1110px
+        : root.current-page == 8 ? 1130px
+        : 650px;
+    private property <length> page-viewport-height: root.height - LedgerTheme.topbar-height;
+    private property <length> page-maximum-y: max(0px, root.page-content-height - root.page-viewport-height);
+    private property <bool> page-scrollable: root.page-maximum-y > 0px;
+    in-out property <length> page-viewport-y: root.capture-state == "portfolio-assets-table" ? 410px : 0px;
+
+    LedgerSidebar {
+        x: 0px; y: 0px; height: parent.height;
+        current-page <=> root.current-page;
+        navigate(page) => {
+            root.current-page = page;
+            root.page-viewport-y = 0px;
+            root.notifications-open = false;
+            root.drawer-open = false;
+            root.transfer-open = false;
+        }
+    }
+    Rectangle {
+        x: LedgerTheme.sidebar-width; y: 0px;
+        width: parent.width - LedgerTheme.sidebar-width; height: parent.height;
+        background: LedgerTheme.canvas;
+        LedgerTopbar { x: 0px; y: 0px; width: parent.width; notification-clicked => { root.notifications-open = !root.notifications-open; } }
+        page-scroll := Flickable {
+            x: 0px; y: LedgerTheme.topbar-height;
+            width: parent.width - (root.page-scrollable ? AtlasViewportTokens.scrollbar-hit-width : 0px);
+            height: root.page-viewport-height;
+            viewport-width: self.width;
+            viewport-height: max(self.height, root.page-content-height);
+            viewport-y: -min(root.page-maximum-y, max(0px, root.page-viewport-y));
+            interactive: root.page-scrollable;
+            changed viewport-y => {
+                root.page-viewport-y = min(root.page-maximum-y, max(0px, -self.viewport-y));
+            }
+            flicked => {
+                root.page-viewport-y = min(root.page-maximum-y, max(0px, -self.viewport-y));
+            }
+            content-layer := Rectangle {
+                width: parent.width;
+                height: max(page-scroll.height, root.page-content-height);
+                background: LedgerTheme.canvas;
+                if root.current-page == 0: PortfolioPage {
+                    width: parent.width; height: parent.height; assets: root.assets; capture-state: root.capture-state;
+                    sort-assets(column) => { root.sort-assets(column); }
+                    view-assets => { root.current-page = 1; }
+                    transfer => { root.transfer-review = false; root.transfer-open = true; }
+                }
+                if root.current-page == 1: AssetsPage { width: parent.width; height: parent.height; assets: root.assets; capture-state: root.capture-state; }
+                if root.current-page == 2: TransactionsPage { width: parent.width; height: parent.height; transactions: root.transactions; transaction-selected(index) => { root.selected-transaction = index; root.drawer-copied = false; root.drawer-open = true; } transfer => { root.transfer-review = false; root.transfer-open = true; } }
+                if root.current-page == 3: MarketsPage { width: parent.width; height: parent.height; markets: root.markets; capture-state: root.capture-state; }
+                if root.current-page == 4: AccountsPage { width: parent.width; height: parent.height; accounts: root.accounts; transfer => { root.transfer-review = false; root.transfer-open = true; } }
+                if root.current-page == 5: AnalyticsPage { width: parent.width; height: parent.height; }
+                if root.current-page == 6: ConnectionsPage { width: parent.width; height: parent.height; connections: root.connections; capture-state: root.capture-state; }
+                if root.current-page == 7: SecurityPage { width: parent.width; height: parent.height; events: root.security-events; signers: root.signers; capture-state: root.capture-state; }
+                if root.current-page == 8: SettingsPage { width: parent.width; height: parent.height; capture-state: root.capture-state; }
+            }
+        }
+        if root.page-scrollable: AtlasScrollbar {
+            x: parent.width - self.width;
+            y: LedgerTheme.topbar-height;
+            height: root.page-viewport-height;
+            accessible-label: "Ledger page scroll position";
+            viewport-y: root.page-viewport-y;
+            maximum-y: root.page-maximum-y;
+            viewport-height: root.page-viewport-height;
+            content-height: root.page-content-height;
+            scroll-requested(offset) => { root.page-viewport-y = offset; }
+        }
+        NotificationsPanel { x: parent.width - self.width - 68px; y: 57px; open <=> root.notifications-open; }
+    }
+    TransactionDrawer { x: 0px; y: 0px; width: parent.width; height: parent.height; open <=> root.drawer-open; copied <=> root.drawer-copied; transaction: root.transactions[root.selected-transaction]; }
+    TransferModal { x: 0px; y: 0px; width: parent.width; height: parent.height; open <=> root.transfer-open; review <=> root.transfer-review; }
+}

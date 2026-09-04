@@ -1,0 +1,149 @@
+import { AtlasIcon, IconName, AtlasTypography } from "@atlas-ui/stable.slint";
+import { ActionArea } from "@atlas-ui/preview-nonresponsive.slint";
+import { LedgerTheme } from "theme.slint";
+import { TransactionRecord, MarketRecord, AccountRecord } from "models.slint";
+import { LedgerSurface, LedgerButton, SectionLabel, PageHeading, LedgerSearchField, LedgerStatus, AssetMark, LedgerChart } from "components.slint";
+
+component TransactionRow inherits Rectangle {
+    in property <TransactionRecord> transaction;
+    callback selected();
+    height: 71px;
+    background: action.hovered ? #f3f1eb : LedgerTheme.surface;
+    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border-soft; }
+    Rectangle { x: 14px; y: 20px; width: 30px; height: 30px; border-radius: 999px; background: root.transaction.kind == "Receive" ? #e4efeb : root.transaction.kind == "Swap" ? #eee9dd : #eceae4;
+        AtlasIcon { x: 8px; y: 8px; size: 14px; name: root.transaction.kind == "Receive" ? IconName.download : root.transaction.kind == "Swap" ? IconName.refresh : IconName.back; icon-color: root.transaction.kind == "Receive" ? LedgerTheme.positive : root.transaction.kind == "Swap" ? LedgerTheme.gold : LedgerTheme.secondary; }
+    }
+    Text { x: 53px; width: parent.width * 0.09; text: root.transaction.kind; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 600; vertical-alignment: center; }
+    Text { x: parent.width * 0.14; y: 15px; width: parent.width * 0.11; height: 20px; text: root.transaction.amount; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 10px; font-weight: 650; vertical-alignment: center; }
+    Text { x: parent.width * 0.14; y: 36px; width: parent.width * 0.11; height: 16px; text: root.transaction.asset; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    SectionLabel { x: parent.width * 0.27; y: 10px; width: parent.width * 0.18; text: root.transaction.direction; }
+    Text { x: parent.width * 0.27; y: 25px; width: parent.width * 0.18; height: 17px; text: root.transaction.party; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 600; vertical-alignment: center; overflow: elide; }
+    Text { x: parent.width * 0.27; y: 42px; width: parent.width * 0.18; height: 14px; text: root.transaction.address; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+    Text { x: parent.width * 0.47; width: parent.width * 0.10; text: root.transaction.network; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; }
+    LedgerStatus { x: parent.width * 0.58; y: 27px; width: parent.width * 0.09; label: root.transaction.status; tone: root.transaction.tone; }
+    Text { x: parent.width * 0.68; y: 15px; width: parent.width * 0.09; height: 20px; text: root.transaction.time; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 10px; font-weight: 600; vertical-alignment: center; }
+    Text { x: parent.width * 0.68; y: 36px; width: parent.width * 0.10; height: 16px; text: "SEP 01, 2026"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+    Text { x: parent.width * 0.79; width: parent.width * 0.16; text: root.transaction.hash; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; overflow: elide; }
+    AtlasIcon { x: parent.width - 22px; y: 30px; size: 9px; name: IconName.chevron-right; icon-color: LedgerTheme.muted; }
+    action := ActionArea { accessible-name: root.transaction.kind + " " + root.transaction.asset; activated => { root.selected(); } }
+}
+
+export component TransactionsPage inherits Rectangle {
+    in property <[TransactionRecord]> transactions;
+    callback transaction-selected(int);
+    callback transfer();
+    Rectangle { x: 27px; y: 30px; width: parent.width - 54px; height: parent.height - 50px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "02 / TREASURY ACTIVITY"; title: "Transactions"; subtitle: "Complete movement history across all connected accounts."; }
+        LedgerButton { x: parent.width - 130px; y: 10px; width: 130px; text: "New Transfer"; show-icon: true; icon-name: IconName.add; accent: true; clicked => { root.transfer(); } }
+        Rectangle { x: 0px; y: 111px; width: parent.width; height: 47px; border-width: 1px; border-color: LedgerTheme.border; background: LedgerTheme.surface;
+            LedgerSearchField { x: 8px; y: 7px; width: max(220px, parent.width - 592px); placeholder-text: "Hash, address or reference"; accessible-name: "Search transactions"; }
+            LedgerButton { x: parent.width - 556px; y: 7px; width: 74px; text: "TYPE  ⌄"; }
+            LedgerButton { x: parent.width - 475px; y: 7px; width: 76px; text: "ASSET  ⌄"; }
+            LedgerButton { x: parent.width - 392px; y: 7px; width: 92px; text: "NETWORK  ⌄"; }
+            LedgerButton { x: parent.width - 293px; y: 7px; width: 87px; text: "STATUS  ⌄"; }
+            LedgerButton { x: parent.width - 199px; y: 7px; width: 74px; text: "DATE  ⌄"; }
+            LedgerButton { x: parent.width - 118px; y: 7px; width: 38px; text: "≡"; }
+        }
+        LedgerSurface { x: 0px; y: 167px; width: parent.width; height: 386px; clip: true;
+            Rectangle { x: 1px; y: 1px; width: parent.width - 2px; height: 30px; background: #efede7;
+                Text { x: 14px; width: parent.width * 0.11; text: "TYPE"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                Text { x: parent.width * 0.14; width: parent.width * 0.11; text: "ASSET / AMOUNT"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                Text { x: parent.width * 0.27; width: parent.width * 0.18; text: "FROM / TO"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                Text { x: parent.width * 0.47; width: parent.width * 0.10; text: "NETWORK"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                Text { x: parent.width * 0.58; width: parent.width * 0.09; text: "STATUS"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                Text { x: parent.width * 0.68; width: parent.width * 0.09; text: "TIME"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                Text { x: parent.width * 0.79; width: parent.width * 0.16; text: "HASH"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+            }
+            for transaction[index] in root.transactions: TransactionRow { x: 1px; y: 31px + index * 71px; width: parent.width - 2px; transaction: transaction; selected => { root.transaction-selected(index); } }
+        }
+    }
+}
+
+component MarketRow inherits Rectangle {
+    in property <MarketRecord> market;
+    in property <bool> selected;
+    callback clicked();
+    height: 64px;
+    background: root.selected ? #edf1ed : action.hovered ? #f3f1eb : LedgerTheme.surface;
+    if root.selected: Rectangle { x: 0px; y: 0px; width: 3px; height: parent.height; background: LedgerTheme.green; }
+    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border-soft; }
+    AssetMark { x: 13px; y: 17px; symbol: root.market.pair == "ETH / USD" ? "E" : root.market.pair == "BTC / USD" ? "B" : root.market.pair == "LINK / USD" ? "L" : "S"; tone: root.market.tone; }
+    Text { x: 52px; width: parent.width * 0.20; text: root.market.pair; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 650; vertical-alignment: center; }
+    Text { x: parent.width * 0.27; width: parent.width * 0.14; text: root.market.price; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 10px; font-weight: 600; vertical-alignment: center; }
+    Text { x: parent.width * 0.43; width: parent.width * 0.10; text: root.market.change; color: LedgerTheme.positive; font-family: AtlasTypography.font-mono; font-size: 10px; vertical-alignment: center; }
+    Text { x: parent.width * 0.55; width: parent.width * 0.13; text: root.market.high; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Text { x: parent.width * 0.70; width: parent.width * 0.13; text: root.market.low; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Text { x: parent.width * 0.85; width: parent.width * 0.13; text: root.market.volume; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    action := ActionArea { selected: root.selected; accessible-name: root.market.pair; activated => { root.clicked(); } }
+}
+
+export component MarketsPage inherits Rectangle {
+    in property <[MarketRecord]> markets;
+    in property <string> capture-state;
+    in-out property <int> selected-index: root.capture-state == "markets-btc" ? 1 : 0;
+    Rectangle { x: 27px; y: 30px; width: parent.width - 54px; height: parent.height - 50px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "03 / MARKET DATA"; title: "Markets"; subtitle: "Reference pricing and research for treasury assets."; }
+        LedgerStatus { x: parent.width - 112px; y: 22px; width: 112px; label: "MARKETS OPEN"; tone: 0; }
+        Rectangle { x: 0px; y: 111px; width: parent.width; height: 440px;
+            LedgerSurface { x: 0px; width: parent.width - 330px; height: parent.height; clip: true;
+                Rectangle { x: 1px; y: 1px; width: parent.width - 2px; height: 33px; background: #efede7;
+                    Text { x: 13px; width: parent.width * 0.23; text: "MARKET"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    Text { x: parent.width * 0.27; width: parent.width * 0.14; text: "PRICE"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    Text { x: parent.width * 0.43; width: parent.width * 0.10; text: "24H"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    Text { x: parent.width * 0.55; width: parent.width * 0.13; text: "HIGH"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    Text { x: parent.width * 0.70; width: parent.width * 0.13; text: "LOW"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                    Text { x: parent.width * 0.85; width: parent.width * 0.13; text: "VOLUME"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                }
+                for market[index] in root.markets: MarketRow { x: 1px; y: 34px + index * 64px; width: parent.width - 2px; market: market; selected: root.selected-index == index; clicked => { root.selected-index = index; } }
+            }
+            LedgerSurface { x: parent.width - 319px; width: 319px; height: parent.height;
+                SectionLabel { x: 18px; y: 17px; width: parent.width - 36px; text: "SELECTED MARKET"; }
+                Text { x: 18px; y: 38px; width: parent.width - 36px; height: 28px; text: root.markets[root.selected-index].pair; color: LedgerTheme.text; font-family: "Georgia"; font-size: 21px; vertical-alignment: center; }
+                Text { x: 18px; y: 77px; width: parent.width - 36px; height: 34px; text: root.markets[root.selected-index].price; color: LedgerTheme.text; font-family: "Georgia"; font-size: 25px; vertical-alignment: center; }
+                Text { x: 18px; y: 111px; width: parent.width - 36px; height: 18px; text: root.markets[root.selected-index].change + " today"; color: LedgerTheme.positive; font-family: AtlasTypography.font-mono; font-size: 10px; vertical-alignment: center; }
+                LedgerChart { x: 18px; y: 151px; width: parent.width - 36px; height: 91px; alternate: root.selected-index == 1; }
+                Rectangle { x: 18px; y: 267px; width: parent.width - 36px; height: 141px; border-width: 1px; border-color: LedgerTheme.border-soft;
+                    SectionLabel { x: 11px; y: 8px; width: 90px; text: "OPEN"; }
+                    Text { x: parent.width - 112px; y: 5px; width: 100px; height: 20px; text: "$3,332.08"; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                    SectionLabel { x: 11px; y: 40px; width: 90px; text: "HIGH"; }
+                    Text { x: parent.width - 112px; y: 37px; width: 100px; height: 20px; text: root.markets[root.selected-index].high; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                    SectionLabel { x: 11px; y: 72px; width: 90px; text: "LOW"; }
+                    Text { x: parent.width - 112px; y: 69px; width: 100px; height: 20px; text: root.markets[root.selected-index].low; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                    SectionLabel { x: 11px; y: 104px; width: 90px; text: "VOLUME"; }
+                    Text { x: parent.width - 112px; y: 101px; width: 100px; height: 20px; text: root.markets[root.selected-index].volume; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                }
+            }
+        }
+    }
+}
+
+component AccountCard inherits LedgerSurface {
+    in property <AccountRecord> account;
+    in property <int> index;
+    Rectangle { x: 18px; y: 17px; width: parent.width - 36px; height: 23px;
+        SectionLabel { width: 100px; text: root.account.code; color: LedgerTheme.green; }
+        Text { x: parent.width - 45px; width: 45px; text: "0" + (root.index + 1); color: #c4c0b7; font-family: "Georgia"; font-size: 17px; horizontal-alignment: right; vertical-alignment: center; }
+    }
+    Text { x: 18px; y: 59px; width: parent.width - 36px; height: 29px; text: root.account.name; color: LedgerTheme.text; font-family: "Georgia"; font-size: 20px; vertical-alignment: center; }
+    Text { x: 18px; y: 104px; width: parent.width - 36px; height: 36px; text: root.account.value; color: LedgerTheme.text; font-family: "Georgia"; font-size: 27px; vertical-alignment: center; }
+    Rectangle { x: 18px; y: parent.height - 49px; width: parent.width - 36px; height: 1px; background: LedgerTheme.border; }
+    SectionLabel { x: 18px; y: parent.height - 36px; width: 140px; text: root.account.share + " OF NAV"; }
+    AtlasIcon { x: parent.width - 35px; y: parent.height - 35px; size: 13px; name: IconName.chevron-right; icon-color: LedgerTheme.green; }
+}
+
+export component AccountsPage inherits Rectangle {
+    in property <[AccountRecord]> accounts;
+    callback transfer();
+    Rectangle { x: 27px; y: 30px; width: parent.width - 54px; height: parent.height - 50px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "04 / ACCOUNT BOOK"; title: "Accounts"; subtitle: "Entity and custody account structure."; }
+        LedgerButton { x: parent.width - 113px; y: 10px; width: 113px; text: "Add Account"; show-icon: true; icon-name: IconName.add; }
+        Rectangle { x: 0px; y: 111px; width: parent.width; height: 470px;
+            for account[index] in root.accounts: AccountCard {
+                x: Math.mod(index, 2) * ((parent.width - 12px) / 2 + 12px);
+                y: index < 2 ? 0px : 228px;
+                width: (parent.width - 12px) / 2; height: 216px;
+                account: account; index: index;
+            }
+        }
+    }
+}

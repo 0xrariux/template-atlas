@@ -1,0 +1,47 @@
+import { AtlasIcon, IconName, AtlasTypography } from "@atlas-ui/stable.slint";
+import { AtlasCommandPalette } from "@atlas-ui/preview-nonresponsive.slint";
+import { ForgeTheme } from "theme.slint";
+import { CommandRecord } from "models.slint";
+import { MicroLabel, MonoLabel, PanelRule } from "components.slint";
+
+export component ForgeCommandPalette inherits AtlasCommandPalette {
+    in property <[CommandRecord]> forge-commands;
+    commands: [];
+    query: "";
+
+    Rectangle {
+        visible: root.open;
+        width: parent.width; height: parent.height;
+        background: #050708bf;
+        Rectangle {
+            x: (parent.width - 620px) / 2; y: 99px; width: 620px; height: 480px;
+            border-width: 1px; border-color: #42494e; border-radius: 2px;
+            background: #1a1e21;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 63px; border-width: 1px; border-color: ForgeTheme.border; background: #191d20;
+                Text { x: 18px; text: "⌘"; color: ForgeTheme.accent; font-family: AtlasTypography.font-sans; font-size: 19px; vertical-alignment: center; }
+                Text { x: 47px; width: parent.width - 100px; text: "Search commands..."; color: #727a81; font-family: AtlasTypography.font-mono; font-size: 13px; vertical-alignment: center; }
+                MonoLabel { width: parent.width - 17px; text: "ESC"; color: #737b81; horizontal-alignment: right; }
+            }
+            MicroLabel { x: 18px; y: 76px; text: "COMMANDS"; }
+            VerticalLayout {
+                x: 10px; y: 100px; width: parent.width - 20px; spacing: 0px;
+                for command in root.forge-commands: Rectangle {
+                    height: 56px; background: command-pointer.pressed ? #2a261e : command-pointer.has-hover ? #24272a : #00000000;
+                    animate background { duration: 110ms; }
+                    AtlasIcon { x: 10px; y: 19px; size: 15px; name: command.icon == 1 ? IconName.settings : command.icon == 2 ? IconName.play : command.icon == 3 ? IconName.layers : command.icon == 4 ? IconName.terminal : command.icon == 5 ? IconName.settings : IconName.logs; icon-color: #929aa1; }
+                    Text { x: 38px; y: 9px; text: command.name; color: #d7dade; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 700; }
+                    Text { x: 38px; y: 27px; text: command.detail; color: #656d74; font-family: AtlasTypography.font-sans; font-size: 9px; }
+                    MonoLabel { width: parent.width - 10px; text: command.shortcut; color: #737b81; horizontal-alignment: right; }
+                    accessible-role: AccessibleRole.button; accessible-label: command.name;
+                    accessible-action-default => { root.command-requested(command.name); }
+                    command-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.command-requested(command.name); } }
+                }
+            }
+            Rectangle { y: parent.height - 38px; width: parent.width; height: 38px; background: #191d20;
+                PanelRule { width: parent.width; }
+                Text { x: 15px; text: "↑↓ Navigate     ↵ Run command"; color: #727a81; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                MicroLabel { width: parent.width - 15px; text: "FORGE COMMAND INDEX"; color: #9e742f; horizontal-alignment: right; }
+            }
+        }
+    }
+}

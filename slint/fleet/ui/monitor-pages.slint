@@ -1,0 +1,217 @@
+import { AtlasIcon, IconName, AtlasTypography } from "@atlas-ui/stable.slint";
+import { FleetTheme } from "theme.slint";
+import { DeviceRecord, IncidentRecord, LogRecord } from "models.slint";
+import {
+    FleetSurface, PageHeading, FleetButton, FleetTabs, ToolField, InstrumentLabel,
+    SummaryCell, FleetChart, FleetStatus, FleetMeter, FleetTableRow
+} from "components.slint";
+
+export component MetricsPage inherits Rectangle {
+    in property <[DeviceRecord]> devices;
+    in property <string> capture-state;
+    in-out property <int> metric: root.capture-state == "metrics-memory" ? 1 : 0;
+    in-out property <int> period: root.capture-state == "metrics-24h" ? 3 : 1;
+    in-out property <int> selected-metric-device: 0;
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "TELEMETRY / LIVE SAMPLE STREAM"; title: "Fleet metrics"; subtitle: "Aggregate and per-device operational measurements."; }
+        FleetButton { x: parent.width - 112px; y: 14px; width: 112px; text: "EXPORT DATA"; show-icon: true; icon-name: IconName.download; }
+        FleetSurface { y: 84px; width: parent.width; height: 48px;
+            FleetTabs { x: 8px; y: 8px; width: 310px; labels: ["CPU", "MEMORY", "NETWORK", "TEMP"]; selected-index <=> root.metric; }
+            ToolField { x: 326px; y: 8px; width: 190px; text: "All devices  ⌄"; icon-name: IconName.cpu; }
+            FleetTabs { x: parent.width - 276px; y: 8px; width: 268px; labels: ["15M", "1H", "6H", "24H", "7D"]; selected-index <=> root.period; }
+        }
+        GridLayout { y: 141px; width: parent.width; height: 88px; spacing: 0px;
+            SummaryCell { row:0; col:0; label:"CURRENT"; value:root.metric == 1 ? "64%" : "48%"; detail:"14:42:18 CET"; icon-name:IconName.activity; }
+            SummaryCell { row:0; col:1; label:"AVERAGE"; value:root.metric == 1 ? "55%" : "52%"; detail:root.period == 3 ? "PAST 24 HOURS" : "PAST HOUR"; icon-name:IconName.analytics; }
+            SummaryCell { row:0; col:2; label:"PEAK"; value:root.metric == 1 ? "65%" : "92%"; detail:"NODE-DEMO-01"; icon-name:IconName.warning; tone-color:FleetTheme.warning; }
+            SummaryCell { row:0; col:3; label:"SAMPLES"; value:root.period == 3 ? "34.6K" : "1,442"; detail:"6 DEVICES"; icon-name:IconName.database; }
+        }
+        FleetSurface { y: 238px; width: parent.width; height: 330px;
+            InstrumentLabel { x: 13px; y: 12px; width: 220px; text: root.metric == 1 ? "MEMORY UTILIZATION / ALL DEVICES" : "CPU UTILIZATION / ALL DEVICES"; }
+            Text { x: 13px; y: 33px; height: 29px; text: root.metric == 1 ? "64" : "48"; color: FleetTheme.text; font-family: AtlasTypography.font-mono; font-size: 25px; font-weight: 650; vertical-alignment: center; }
+            Text { x: 54px; y: 42px; text: "%"; color: FleetTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 10px; vertical-alignment: center; }
+            FleetStatus { x: parent.width - 94px; y: 28px; width: 80px; label: "STREAMING"; tone: 0; tone-color: FleetTheme.cyan; align-right: true; }
+            FleetChart { x: 13px; y: 75px; width: parent.width - 26px; height: 216px; series: root.metric; }
+            for tick in 7: Text {
+                x: 13px + tick * ((parent.width - 26px) / 7);
+                y: 301px; width: (parent.width - 26px) / 7; height: 13px;
+                text: root.period == 3
+                    ? (tick == 0 ? "00:00" : tick == 1 ? "04:00" : tick == 2 ? "08:00" : tick == 3 ? "12:00" : tick == 4 ? "16:00" : tick == 5 ? "20:00" : "24:00")
+                    : (tick == 0 ? "13:42" : tick == 1 ? "13:52" : tick == 2 ? "14:02" : tick == 3 ? "14:12" : tick == 4 ? "14:22" : tick == 5 ? "14:32" : "14:42");
+                color: #49616c; font-family: AtlasTypography.font-mono; font-size: 8px;
+                horizontal-alignment: tick == 0 ? left : tick == 6 ? right : center;
+                vertical-alignment: center;
+            }
+        }
+        FleetSurface { y: 577px; width: parent.width; height: parent.height - 577px;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 31px; background: #151e24;
+                InstrumentLabel { x: 11px; width: parent.width * 0.30; text: "DEVICE"; }
+                InstrumentLabel { x: parent.width * 0.35; width: parent.width * 0.15; text: "CURRENT"; }
+                InstrumentLabel { x: parent.width * 0.52; width: parent.width * 0.13; text: "AVERAGE"; }
+                InstrumentLabel { x: parent.width * 0.67; width: parent.width * 0.13; text: "PEAK"; }
+                InstrumentLabel { x: parent.width * 0.82; width: parent.width * 0.13; text: "STATE"; }
+            }
+            for device[index] in root.devices: FleetTableRow {
+                visible: index < 4; y: 31px + index * 47px; width: parent.width; height: 47px;
+                row-label: device.id + " metrics";
+                selected: root.selected-metric-device == index;
+                clicked => { root.selected-metric-device = index; }
+                Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+                Rectangle { x: 11px; y: 10px; width: 27px; height: 27px; border-width: 1px; border-color: #2c525c; background: #14242b;
+                    AtlasIcon { x: 8px; y: 8px; size: 11px; name: IconName.cpu; icon-color: FleetTheme.cyan; }
+                }
+                Text { x: 47px; width: parent.width * 0.25; text: device.id; color: #c2ced3; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Rectangle { x: parent.width * 0.35; y: 16px; width: parent.width * 0.13; height: 18px;
+                    Text { x: 0px; width: 34px; text: (root.metric == 1 ? device.memory-percent : device.cpu) + "%"; color: #91a3ab; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                    FleetMeter { x: 43px; y: 8px; width: parent.width - 43px; value: root.metric == 1 ? device.memory-percent : device.cpu; meter-color: device.tone == 1 ? FleetTheme.warning : FleetTheme.cyan; }
+                }
+                Text { x: parent.width * 0.52; width: parent.width * 0.13; text: index == 0 ? "38%" : index == 1 ? "61%" : index == 2 ? "54%" : "29%"; color: #718690; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Text { x: parent.width * 0.67; width: parent.width * 0.13; text: index == 0 ? "64%" : index == 1 ? "88%" : index == 2 ? "92%" : "48%"; color: index == 2 ? FleetTheme.warning : #718690; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                FleetStatus { x: parent.width * 0.82; y: 16px; width: parent.width * 0.13; label: device.tone == 1 ? "ELEVATED" : "NOMINAL"; tone: device.tone; }
+            }
+        }
+    }
+}
+
+component IncidentRow inherits FleetTableRow {
+    in property <IncidentRecord> item;
+    row-label: root.item.title;
+    selection-color: root.item.tone == 2 ? FleetTheme.danger : FleetTheme.warning;
+    height: 92px;
+    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+    FleetStatus { x: 12px; y: 10px; width: 100px; label: root.item.severity; tone: root.item.tone; }
+    Text { x: 0px; width: parent.width - 13px; y: 10px; text: root.item.time; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+    Text { x: 12px; y: 31px; width: parent.width - 38px; height: 17px; text: root.item.title; color: #d2dde1; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 650; vertical-alignment: center; overflow: elide; }
+    Text { x: 12px; y: 49px; width: parent.width - 38px; height: 14px; text: root.item.detail; color: #607681; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+    Text { x: 12px; y: 69px; text: root.item.device + "   " + root.item.status + "   " + root.item.owner; color: #607681; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+    AtlasIcon { x: parent.width - 21px; y: 42px; size: 10px; name: IconName.chevron-right; icon-color: #536873; }
+}
+
+component IncidentInspector inherits FleetSurface {
+    in property <IncidentRecord> incident;
+    Rectangle { x: 0px; y: 0px; width: parent.width; height: 64px; background: #151e24;
+        InstrumentLabel { x: 13px; y: 10px; width: 180px; text: "INCIDENT DETAIL"; }
+        Text { x: 13px; y: 28px; width: parent.width - 48px; text: root.incident.severity; color: root.incident.tone == 2 ? FleetTheme.danger : FleetTheme.warning; font-family: AtlasTypography.font-mono; font-size: 11px; font-weight: 650; vertical-alignment: center; }
+        AtlasIcon { x: parent.width - 27px; y: 21px; size: 12px; name: IconName.close; icon-color: #5a6f79; }
+        Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border; }
+    }
+    Rectangle { x: 13px; y: 80px; width: parent.width - 26px; height: 58px; border-width: 1px; border-color: #273a43; background: #0f171c;
+        Rectangle { x: 10px; y: 12px; width: 31px; height: 31px; border-width: 1px; border-color: #31545e; background: #14242b;
+            AtlasIcon { x: 8px; y: 8px; size: 15px; name: IconName.cpu; icon-color: FleetTheme.cyan; }
+        }
+        Text { x: 50px; y: 9px; width: parent.width - 140px; height: 17px; text: root.incident.device; color: #c5d0d4; font-family: AtlasTypography.font-mono; font-size: 10px; font-weight: 600; vertical-alignment: center; }
+        Text { x: 50px; y: 29px; width: parent.width - 140px; height: 14px; text: "SITE-ALPHA · 192.0.2.42"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+        FleetStatus { x: parent.width - 89px; y: 21px; width: 78px; label: root.incident.status; tone: root.incident.tone; align-right: true; }
+    }
+    InstrumentLabel { x: 13px; y: 158px; width: parent.width - 26px; text: "INCIDENT TIMELINE"; }
+    for step in 4: Rectangle {
+        x: 13px; y: 181px + step * 58px; width: parent.width - 26px; height: 50px;
+        Text { x: 0px; width: 34px; text: step == 0 ? "14:10" : step == 1 ? "14:18" : step == 2 ? "14:26" : "14:34"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: top; }
+        Rectangle { x: 41px; y: 2px; width: 7px; height: 7px; border-radius: 4px; background: step == 0 ? FleetTheme.danger : #526a74; }
+        if step < 3: Rectangle { x: 44px; y: 11px; width: 1px; height: 46px; background: #2a3c45; }
+        Text { x: 58px; y: 0px; width: parent.width - 58px; height: 15px; text: step == 0 ? "Threshold crossed" : step == 1 ? "Alert created" : step == 2 ? "Notification sent" : "Awaiting operator"; color: #b9c5ca; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 600; vertical-alignment: center; }
+        Text { x: 58px; y: 18px; width: parent.width - 58px; height: 25px; text: step == 0 ? root.incident.detail : step == 1 ? "Fleet policy evaluated sample telemetry." : step == 2 ? "Demo operations channel notified." : "No remediation action recorded."; color: FleetTheme.muted; font-family: AtlasTypography.font-sans; font-size: 8px; wrap: word-wrap; }
+    }
+    Rectangle { x: 13px; y: parent.height - 44px; width: parent.width - 26px; height: 31px;
+        FleetButton { x: 0px; y: 0px; width: (parent.width - 5px) / 2; text: "ACKNOWLEDGE"; show-icon: true; icon-name: IconName.check; }
+        FleetButton { x: (parent.width + 5px) / 2; width: (parent.width - 5px) / 2; text: "RESOLVE"; accent: true; }
+    }
+}
+
+export component AlertsPage inherits Rectangle {
+    in property <[IncidentRecord]> incidents;
+    in property <string> capture-state;
+    in-out property <int> selected-incident: root.capture-state == "alerts-selected-warning" ? 1 : 0;
+    in-out property <int> selected-rule: 0;
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "INCIDENTS / ACTIVE MONITORING"; title: "Alerts"; subtitle: "Review simulated fleet incidents and notification rules."; }
+        FleetButton { x: parent.width - 115px; y: 14px; width: 115px; text: "NEW RULE"; show-icon: true; icon-name: IconName.add; accent: true; }
+        GridLayout { y: 84px; width: parent.width; height: 82px; spacing: 0px;
+            SummaryCell { row:0; col:0; label:"OPEN"; value:"3"; detail:"1 CRITICAL"; icon-name:IconName.warning; tone-color:FleetTheme.danger; }
+            SummaryCell { row:0; col:1; label:"ACKNOWLEDGED"; value:"1"; detail:"DEMO ADMIN"; icon-name:IconName.check; tone-color:FleetTheme.warning; }
+            SummaryCell { row:0; col:2; label:"RESOLVED TODAY"; value:"12"; detail:"AVG 8M 42S"; icon-name:IconName.check; tone-color:FleetTheme.green; }
+            SummaryCell { row:0; col:3; label:"RULES ACTIVE"; value:"8"; detail:"ALL HEALTHY"; icon-name:IconName.shield; }
+            SummaryCell { row:0; col:4; label:"MTTA"; value:"2m"; detail:"−18% THIS WEEK"; icon-name:IconName.clock; }
+        }
+        Rectangle { y: 175px; width: parent.width; height: 458px;
+            FleetSurface { x: 0px; y: 0px; width: parent.width - 339px; height: parent.height;
+                Rectangle { x: 0px; y: 0px; width: parent.width; height: 38px; background: #151e24;
+                    InstrumentLabel { x: 12px; width: 180px; text: "ACTIVE INCIDENTS"; }
+                    ToolField { x: parent.width - 230px; y: 5px; width: 218px; height: 28px; text: "Search incidents..."; icon-name: IconName.search; }
+                }
+                for item[index] in root.incidents: IncidentRow { y: 38px + index * 92px; width: parent.width; item: item; selected: root.selected-incident == index; clicked => { root.selected-incident = index; } }
+            }
+            IncidentInspector { x: parent.width - 330px; y: 0px; width: 330px; height: parent.height; incident: root.incidents[root.selected-incident]; }
+        }
+        FleetSurface { y: 642px; width: parent.width; height: parent.height - 642px;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 38px; background: #151e24;
+                InstrumentLabel { x: 12px; width: 180px; text: "ALERT RULES"; }
+                Text { x: 0px; width: parent.width - 12px; text: "+  MANAGE RULES"; color: FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+            }
+            for rule in 3: FleetTableRow {
+                y: 38px + rule * 42px; width: parent.width; height: 42px;
+                row-label: rule == 0 ? "High CPU" : rule == 1 ? "Thermal threshold" : "Missing heartbeat";
+                selected: root.selected-rule == rule;
+                clicked => { root.selected-rule = rule; }
+                Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+                AtlasIcon { x: 12px; y: 15px; size: 12px; name: rule == 0 ? IconName.activity : rule == 1 ? IconName.warning : IconName.clock; icon-color: FleetTheme.cyan; }
+                Text { x: 34px; width: parent.width * 0.29; text: rule == 0 ? "High CPU" : rule == 1 ? "Thermal threshold" : "Missing heartbeat"; color: #bdc9ce; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Text { x: parent.width * 0.34; width: parent.width * 0.42; text: rule == 0 ? "CPU > 90% for 5 minutes" : rule == 1 ? "Temperature > 70°C" : "Heartbeat missing for 10 minutes"; color: #617681; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                FleetStatus { x: parent.width - 83px; y: 13px; width: 70px; label: "ACTIVE"; tone: 0; align-right: true; }
+            }
+        }
+    }
+}
+
+export component LogsPage inherits Rectangle {
+    in property <[LogRecord]> logs;
+    in-out property <int> selected-log: 2;
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        Rectangle { x: 0px; y: 0px; width: parent.width; height: 66px;
+            InstrumentLabel { x: 0px; y: 0px; width: 240px; text: "STREAM / FLEET LOGS"; }
+            Text { x: 0px; y: 18px; height: 30px; text: "System log viewer"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 25px; font-weight: 700; vertical-alignment: center; }
+            FleetStatus { x: parent.width - 140px; y: 20px; width: 128px; label: "STREAMING · 42 MSG/S"; tone: 0; tone-color: FleetTheme.cyan; align-right: true; }
+        }
+        FleetSurface { y: 84px; width: parent.width; height: 48px;
+            ToolField { x: 8px; y: 8px; width: 150px; text: "ALL DEVICES  ⌄"; }
+            ToolField { x: 165px; y: 8px; width: 150px; text: "ALL SERVICES  ⌄"; }
+            ToolField { x: 322px; y: 8px; width: 135px; text: "ALL LEVELS  ⌄"; }
+            ToolField { x: 464px; y: 8px; width: parent.width - 519px; text: "Search messages..."; icon-name: IconName.search; }
+            FleetButton { x: parent.width - 47px; y: 8px; width: 39px; text: "≡"; }
+        }
+        FleetSurface { y: 141px; width: parent.width; height: parent.height - 141px; background: #0e151a;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 32px; background: #151e24;
+                InstrumentLabel { x: 11px; width: parent.width * 0.12; text: "TIME"; }
+                InstrumentLabel { x: parent.width * 0.13; width: parent.width * 0.17; text: "DEVICE"; }
+                InstrumentLabel { x: parent.width * 0.31; width: parent.width * 0.14; text: "SERVICE"; }
+                InstrumentLabel { x: parent.width * 0.46; width: parent.width * 0.10; text: "LEVEL"; }
+                InstrumentLabel { x: parent.width * 0.57; width: parent.width * 0.41; text: "MESSAGE"; }
+            }
+            for row[index] in root.logs: FleetTableRow {
+                y: 32px + index * 54px; width: parent.width; height: 54px;
+                row-label: row.time + " " + row.device + " " + row.message;
+                base-background: index == 2 ? #1a1417 : #0e151a;
+                selected-background: index == 2 ? #2a1a1e : #183039;
+                selection-color: row.tone == 2 ? FleetTheme.danger : FleetTheme.cyan;
+                selected: root.selected-log == index;
+                clicked => { root.selected-log = index; }
+                Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+                Text { x: 11px; width: parent.width * 0.12; text: row.time; color: #607681; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Text { x: parent.width * 0.13; width: parent.width * 0.17; text: row.device; color: #9eafb6; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Text { x: parent.width * 0.31; width: parent.width * 0.14; text: row.service; color: #718690; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                FleetStatus { x: parent.width * 0.46; y: 19px; width: parent.width * 0.10; label: row.level; tone: row.tone == 2 ? 3 : row.tone; }
+                Text { x: parent.width * 0.57; width: parent.width * 0.41 - 12px; text: row.message; color: row.tone == 2 ? #bc7777 : #80939c; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; overflow: elide; }
+            }
+            Rectangle { y: 302px; width: parent.width; height: parent.height - 302px; background: #0d1419; clip: true;
+                Rectangle { x: 0px; y: 0px; width: parent.width; height: 1px; background: FleetTheme.border; }
+                for line in 11: Text {
+                    x: 14px; y: 14px + line * 25px;
+                    width: parent.width - 28px; height: 15px;
+                    text: "14:41:" + (58 - line) + "." + (line * 83) + "   SAMPLE TRACE   waiting for next simulated telemetry packet...";
+                    color: #3d5660; font-family: AtlasTypography.font-mono; font-size: 8px;
+                    vertical-alignment: center; overflow: elide;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,316 @@
+import { AtlasIcon, IconName, AtlasTypography, AtlasSwitch } from "@atlas-ui/stable.slint";
+import { ActionArea, AtlasSettingsRow, AtlasCopyableValue } from "@atlas-ui/preview-nonresponsive.slint";
+import { LedgerTheme } from "theme.slint";
+import { ConnectionRecord, SecurityEventRecord, SignerRecord } from "models.slint";
+import { LedgerSurface, LedgerButton, SectionLabel, PageHeading, SummaryCell, ToolField, LedgerSearchField, LedgerStatus } from "components.slint";
+
+component ConnectionRow inherits Rectangle {
+    in property <ConnectionRecord> connection;
+    in property <bool> selected;
+    callback clicked();
+    height: 68px;
+    background: root.selected ? #edf1ed : action.hovered ? #f3f1eb : LedgerTheme.surface;
+    if root.selected: Rectangle { x: 0px; y: 0px; width: 3px; height: parent.height; background: LedgerTheme.green; }
+    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border-soft; }
+    Rectangle { x: 12px; y: 13px; width: 32px; height: 32px; border-radius: 2px; background: root.connection.tone == 0 ? #205c4d : root.connection.tone == 1 ? #557a68 : root.connection.tone == 3 ? #b6924b : #6d7f9a;
+        AtlasIcon { x: 9px; y: 9px; size: 14px; name: IconName.shield; icon-color: #ffffff; }
+    }
+    Text { x: 55px; y: 9px; width: parent.width * 0.34; height: 20px; text: root.connection.name; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 650; vertical-alignment: center; overflow: elide; }
+    Text { x: 55px; y: 29px; width: parent.width * 0.43; height: 16px; text: root.connection.category + " · " + root.connection.account; color: LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; overflow: elide; }
+    Text { x: parent.width - 184px; width: 80px; text: root.connection.balance; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+    LedgerStatus { x: parent.width - 92px; y: 21px; width: 72px; label: root.connection.state; tone: root.connection.state == "Degraded" ? 1 : 0; }
+    AtlasIcon { x: parent.width - 16px; y: 25px; size: 8px; name: IconName.chevron-right; icon-color: LedgerTheme.muted; }
+    action := ActionArea { selected: root.selected; accessible-name: root.connection.name; activated => { root.clicked(); } }
+}
+
+export component ConnectionsPage inherits Rectangle {
+    in property <[ConnectionRecord]> connections;
+    in property <string> capture-state;
+    in-out property <int> selected-index: root.capture-state == "connections-degraded" ? 4 : 0;
+    in-out property <bool> connection-copied: false;
+    Rectangle { x: 27px; y: 30px; width: parent.width - 54px; height: 1100px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "07 / CONNECTED INFRASTRUCTURE"; title: "Connections"; subtitle: "Custody, exchanges, networks, and financial data providers."; }
+        LedgerButton { x: parent.width - 135px; y: 10px; width: 135px; text: "Add Connection"; show-icon: true; icon-name: IconName.add; accent: true; }
+        LedgerSurface { x: 0px; y: 129px; width: parent.width; height: 88px;
+            Rectangle { x: 18px; y: 21px; width: 52px; height: 52px; border-radius: 999px; background: #e5efeb;
+                AtlasIcon { x: 17px; y: 17px; size: 18px; name: IconName.webhook; icon-color: LedgerTheme.green; }
+            }
+            SectionLabel { x: 85px; y: 15px; width: 190px; text: "CONNECTION STATUS"; }
+            Text { x: 85px; y: 32px; width: 330px; height: 24px; text: "5 of 5 systems reporting."; color: LedgerTheme.text; font-family: "Georgia"; font-size: 17px; vertical-alignment: center; }
+            Text { x: 85px; y: 60px; width: 330px; height: 17px; text: "Last reconciliation completed 42 seconds ago."; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; }
+            Rectangle { x: parent.width - 410px; y: 20px; width: 1px; height: 62px; background: LedgerTheme.border; }
+            SectionLabel { x: parent.width - 294px; y: 21px; width: 90px; text: "CONNECTED"; }
+            Text { x: parent.width - 294px; y: 40px; width: 90px; height: 26px; text: "4"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 21px; vertical-alignment: center; }
+            SectionLabel { x: parent.width - 202px; y: 21px; width: 90px; text: "DEGRADED"; }
+            Text { x: parent.width - 202px; y: 40px; width: 90px; height: 26px; text: "1"; color: LedgerTheme.gold; font-family: "Georgia"; font-size: 21px; vertical-alignment: center; }
+            LedgerButton { x: parent.width - 112px; y: 36px; width: 96px; text: "SYNC ALL"; show-icon: true; icon-name: IconName.refresh; }
+        }
+        Rectangle { x: 0px; y: 228px; width: parent.width; height: 471px;
+            LedgerSurface { x: 0px; width: parent.width - 351px; height: parent.height; clip: true;
+                Rectangle { x: 1px; y: 1px; width: parent.width - 2px; height: 61px;
+                    SectionLabel { x: 14px; y: 9px; width: 180px; text: "CONNECTED SYSTEMS"; }
+                    Text { x: 14px; y: 26px; width: 100px; height: 22px; text: "5"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 17px; vertical-alignment: center; }
+                    LedgerSearchField { x: parent.width - 224px; y: 15px; width: 210px; placeholder-text: "Search connections"; accessible-name: "Search connections"; }
+                    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border; }
+                }
+                for connection[index] in root.connections: ConnectionRow { x: 1px; y: 62px + index * 68px; width: parent.width - 2px; connection: connection; selected: root.selected-index == index; clicked => { root.selected-index = index; root.connection-copied = false; } }
+            }
+            LedgerSurface { x: parent.width - 340px; width: 340px; height: parent.height;
+                Rectangle { x: 17px; y: 17px; width: 38px; height: 38px; border-radius: 2px; background: root.selected-index == 4 ? #b6924b : #205c4d;
+                    AtlasIcon { x: 11px; y: 11px; size: 16px; name: IconName.shield; icon-color: #ffffff; }
+                }
+                SectionLabel { x: 68px; y: 14px; width: 200px; text: "SELECTED CONNECTION"; }
+                Text { x: 68px; y: 31px; width: 235px; height: 26px; text: root.connections[root.selected-index].name; color: LedgerTheme.text; font-family: "Georgia"; font-size: 16px; vertical-alignment: center; overflow: elide; }
+                SectionLabel { x: 17px; y: 78px; width: 200px; text: "SIMULATED BALANCE"; }
+                Text { x: 17px; y: 98px; width: parent.width - 34px; height: 36px; text: root.selected-index == 4 ? "$182,420.00" : "$842,240.18"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 25px; vertical-alignment: center; }
+                Text { x: 17px; y: 137px; width: parent.width - 34px; height: 17px; text: root.selected-index == 4 ? "14.2% of fictional NAV" : "65.6% of fictional NAV"; color: LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                Rectangle { x: 17px; y: 169px; width: parent.width - 34px; height: 174px;
+                    for label[index] in ["CONNECTION TYPE", "ACCOUNT", "LAST SYNC", "SYNC LATENCY", "NETWORKS", "ASSETS"]: Rectangle {
+                        x: Math.mod(index, 2) == 0 ? 0px : parent.width / 2 + 9px;
+                        y: index < 2 ? 0px : index < 4 ? 58px : 116px;
+                        width: parent.width / 2 - 9px; height: 49px;
+                        SectionLabel { width: parent.width; height: 18px; text: label; }
+                        Text { y: 26px; width: parent.width; height: 21px; text: index == 0 ? root.connections[root.selected-index].category : index == 1 ? root.connections[root.selected-index].account : index == 2 ? root.connections[root.selected-index].sync : index == 3 ? (root.selected-index == 4 ? "1,840 ms" : "420 ms") : index == 4 ? (root.selected-index == 4 ? "1 sample" : "6 samples") : (root.selected-index == 4 ? "1 sample" : "12 samples"); color: index == 2 ? (root.selected-index == 4 ? LedgerTheme.gold : LedgerTheme.positive) : LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+                    }
+                }
+                Rectangle { x: 17px; y: 358px; width: parent.width - 34px; height: 51px; background: #f0eee8;
+                    SectionLabel { x: 10px; y: 4px; width: parent.width - 20px; text: "DEMO CONNECTION ID"; }
+                    AtlasCopyableValue {
+                        x: 0px; y: 15px; width: parent.width; height: 33px;
+                        value: root.selected-index == 4 ? "conn_demo_0005" : "conn_demo_0001";
+                        copied <=> root.connection-copied;
+                        copy-requested(_) => { root.connection-copied = true; }
+                        copy-label: "Copy connection identifier";
+                        background: #00000000;
+                        text-inset: 10px; action-width: 42px;
+                        icon-size: 10px; icon-right-inset: 15px; icon-offset-y: 10px;
+                        text-color: LedgerTheme.secondary; text-font-size: 9px;
+                        icon-color: LedgerTheme.muted; copied-color: LedgerTheme.positive;
+                    }
+                }
+            }
+        }
+        LedgerSurface { x: 0px; y: 710px; width: parent.width; height: 223px; clip: true;
+            SectionLabel { x: 15px; y: 13px; width: 180px; text: "NETWORK STATUS"; }
+            Text { x: 15px; y: 30px; width: 230px; height: 22px; text: "Blockchain endpoints"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 16px; vertical-alignment: center; }
+            Rectangle { x: 1px; y: 64px; width: parent.width - 2px; height: 30px; background: #efede7;
+                Text { x: 14px; width: 180px; text: "NETWORK"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.25; width: 180px; text: "ENDPOINT"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.51; width: 130px; text: "BLOCK HEIGHT"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.70; width: 90px; text: "LATENCY"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.84; width: 100px; text: "STATUS"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+            }
+            for network[index] in ["Ethereum", "Bitcoin", "Solana"]: Rectangle { x: 1px; y: 94px + index * ((parent.height - 95px) / 3); width: parent.width - 2px; height: (parent.height - 95px) / 3;
+                if index < 2: Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border-soft; }
+                Text { x: 14px; width: 180px; text: (index == 0 ? "Ξ  " : index == 1 ? "₿  " : "S  ") + network; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 600; vertical-alignment: center; }
+                Text { x: parent.width * 0.25; width: 180px; text: index == 0 ? "eth-mainnet-01" : index == 1 ? "btc-mainnet-01" : "sol-mainnet-01"; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Text { x: parent.width * 0.51; width: 130px; text: index == 0 ? "24,812,244" : index == 1 ? "918,442" : "382,941,180"; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                Text { x: parent.width * 0.70; width: 90px; text: index == 0 ? "42 ms" : index == 1 ? "68 ms" : "84 ms"; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                LedgerStatus { x: parent.width * 0.84; y: 12px; width: 90px; label: index == 2 ? "DEGRADED" : "HEALTHY"; tone: index == 2 ? 1 : 0; }
+            }
+        }
+    }
+}
+
+component SecurityEventRow inherits Rectangle {
+    in property <SecurityEventRecord> event;
+    height: 63px;
+    Rectangle { x: 0px; y: 13px; width: 28px; height: 28px; border-radius: 999px; background: #e8eee9;
+        AtlasIcon { x: 8px; y: 8px; size: 12px; name: root.event.tone == 1 ? IconName.lock : root.event.tone == 2 ? IconName.profile : IconName.check; icon-color: LedgerTheme.green; }
+    }
+    Text { x: 39px; y: 6px; width: parent.width - 90px; height: 18px; text: root.event.title; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 650; vertical-alignment: center; overflow: elide; }
+    Text { x: 39px; y: 24px; width: parent.width - 90px; height: 15px; text: root.event.detail; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+    Text { x: 39px; y: 40px; width: parent.width - 90px; height: 14px; text: root.event.actor; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+    Text { x: parent.width - 44px; y: 6px; width: 44px; height: 18px; text: root.event.time; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+}
+
+export component SecurityPage inherits Rectangle {
+    in property <[SecurityEventRecord]> events;
+    in property <[SignerRecord]> signers;
+    in property <string> capture-state;
+    in-out property <int> tab: root.capture-state == "security-approvals" ? 1 : 0;
+    Rectangle { x: 27px; y: 30px; width: parent.width - 54px; height: 1080px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "08 / TREASURY SECURITY"; title: "Security"; subtitle: "Approvals, signers, allowlists, and access governance."; }
+        LedgerButton { x: parent.width - 130px; y: 10px; width: 130px; text: "Security Report"; show-icon: true; icon-name: IconName.download; }
+        LedgerSurface { x: 0px; y: 129px; width: parent.width; height: 109px;
+            Rectangle { x: 18px; y: 23px; width: 47px; height: 47px; border-radius: 999px; background: #e3eee9;
+                AtlasIcon { x: 14px; y: 14px; size: 19px; name: IconName.shield; icon-color: LedgerTheme.green; }
+            }
+            SectionLabel { x: 81px; y: 17px; width: 190px; text: "SECURITY POSTURE"; }
+            Text { x: 81px; y: 34px; width: 180px; height: 25px; text: "Strong"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 18px; vertical-alignment: center; }
+            Text { x: 81px; y: 61px; width: 260px; height: 16px; text: "All critical treasury controls are active."; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+            Text { x: 358px; y: 34px; width: 90px; height: 37px; text: "92"; color: LedgerTheme.green; font-family: "Georgia"; font-size: 28px; horizontal-alignment: right; vertical-alignment: center; }
+            Text { x: 448px; y: 47px; width: 42px; height: 20px; text: "/100"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+            Rectangle { x: 515px; y: 18px; width: parent.width - 533px; height: 95px;
+                for label[index] in ["Multi-factor approval", "Address allowlist", "Hardware-backed keys", "Recovery key review"]: Rectangle { x: Math.mod(index, 2) * parent.width / 2; y: index < 2 ? 0px : 46px; width: parent.width / 2; height: 43px;
+                    Rectangle { x: 0px; y: 7px; width: 24px; height: 24px; border-radius: 999px; background: index == 3 ? #f2eadb : #e5efeb;
+                        AtlasIcon { x: 7px; y: 7px; size: 10px; name: index == 3 ? IconName.warning : IconName.check; icon-color: index == 3 ? LedgerTheme.gold : LedgerTheme.positive; }
+                    }
+                    Text { x: 33px; y: 2px; width: parent.width - 36px; height: 18px; text: label; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 650; vertical-alignment: center; overflow: elide; }
+                    Text { x: 33px; y: 20px; width: parent.width - 36px; height: 17px; text: index == 0 ? "Required for all transfers" : index == 1 ? "14 approved destinations" : index == 2 ? "3 of 4 signers" : "Due in 12 days"; color: LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; overflow: elide; }
+                }
+            }
+        }
+        Rectangle { x: 0px; y: 248px; width: parent.width; height: 39px;
+            Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border; }
+            for label[index] in ["Overview", "Approvals", "Signers", "Allowlist", "Audit Log"]: Rectangle { x: index * 94px; width: 94px; height: parent.height; background: #00000000;
+                Text { text: label; color: root.tab == index ? LedgerTheme.text : LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: root.tab == index ? 650 : 400; horizontal-alignment: center; vertical-alignment: center; }
+                if root.tab == index: Rectangle { y: parent.height - 2px; width: parent.width; height: 2px; background: LedgerTheme.green; }
+                action := ActionArea { selected: root.tab == index; accessible-name: label; activated => { root.tab = index; } }
+            }
+        }
+        if root.tab == 0: Rectangle { x: 0px; y: 297px; width: parent.width; height: 323px;
+            LedgerSurface { x: 0px; width: 390px; height: parent.height;
+                SectionLabel { x: 16px; y: 14px; width: parent.width - 32px; text: "DEMO TRANSFER APPROVAL POLICY"; }
+                Text { x: 16px; y: 32px; width: parent.width - 32px; height: 23px; text: "2 of 3 signatures required"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 16px; vertical-alignment: center; }
+                for initials[index] in ["PA", "OA", "FA"]: Rectangle { x: 28px + index * 112px; y: 78px; width: 58px; height: 58px; border-width: 2px; border-color: index == 2 ? LedgerTheme.border : LedgerTheme.green; border-radius: 999px; background: LedgerTheme.surface;
+                    Text { text: initials; color: index == 2 ? LedgerTheme.muted : LedgerTheme.green; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                    if index < 2: Rectangle { x: 43px; y: 40px; width: 17px; height: 17px; border-radius: 999px; background: LedgerTheme.green;
+                        AtlasIcon { x: 5px; y: 5px; size: 7px; name: IconName.check; icon-color: #ffffff; }
+                    }
+                }
+                Text { x: 16px; y: 157px; width: parent.width - 32px; height: 42px; text: "Sample transfers above $10,000 require approval from two fictional treasury roles."; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 10px; wrap: word-wrap; }
+                Rectangle { x: 16px; y: 221px; width: parent.width - 32px; height: 74px; background: #f3f1eb;
+                    for label[index] in ["DAILY LIMIT", "SINGLE TRANSFER", "COOLDOWN"]: Rectangle { x: index * parent.width / 3; width: parent.width / 3; height: parent.height;
+                        SectionLabel { x: 9px; y: 12px; width: parent.width - 18px; text: label; }
+                        Text { x: 9px; y: 34px; width: parent.width - 18px; height: 22px; text: index == 0 ? "$250,000" : index == 1 ? "$100,000" : "15 minutes"; color: LedgerTheme.text; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+                    }
+                }
+            }
+            LedgerSurface { x: 401px; width: parent.width - 401px; height: parent.height;
+                SectionLabel { x: 16px; y: 14px; width: parent.width - 32px; text: "RECENT DEMO SECURITY ACTIVITY"; }
+                Text { x: 16px; y: 32px; width: parent.width - 32px; height: 23px; text: "Audit events"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 16px; vertical-alignment: center; }
+                for event[index] in root.events: SecurityEventRow { x: 16px; y: 66px + index * 63px; width: parent.width - 32px; event: event; }
+            }
+        }
+        if root.tab != 0: LedgerSurface { x: 0px; y: 297px; width: parent.width; height: 323px;
+            AtlasIcon { x: (parent.width - 38px) / 2; y: 69px; size: 38px; name: root.tab == 1 ? IconName.check : root.tab == 2 ? IconName.users : root.tab == 3 ? IconName.shield : IconName.logs; icon-color: #9aa39b; }
+            SectionLabel { x: 0px; y: 126px; width: parent.width; text: "SECURITY / " + (root.tab == 1 ? "APPROVALS" : root.tab == 2 ? "SIGNERS" : root.tab == 3 ? "ALLOWLIST" : "AUDIT LOG"); horizontal-alignment: center; }
+            Text { x: 0px; y: 148px; width: parent.width; height: 34px; text: root.tab == 1 ? "Approvals" : root.tab == 2 ? "Signers" : root.tab == 3 ? "Allowlist" : "Audit Log"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 24px; horizontal-alignment: center; vertical-alignment: center; }
+            Text { x: 0px; y: 190px; width: parent.width; height: 22px; text: "Detailed controls and history are available here."; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+            LedgerButton { x: (parent.width - 122px) / 2; y: 232px; width: 122px; text: root.tab == 1 ? "Add Approval" : "Add Entry"; show-icon: true; icon-name: IconName.add; }
+        }
+        LedgerSurface { x: 0px; y: 630px; width: parent.width; height: 274px; clip: true;
+            SectionLabel { x: 16px; y: 13px; width: 230px; text: "FICTIONAL AUTHORIZED ROLES"; }
+            Text { x: 16px; y: 30px; width: 230px; height: 22px; text: "Demo treasury access"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 16px; vertical-alignment: center; }
+            Rectangle { x: 1px; y: 63px; width: parent.width - 2px; height: 30px; background: #efede7;
+                Text { x: 14px; width: parent.width * 0.24; text: "SIGNER"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.25; width: parent.width * 0.22; text: "ROLE"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.48; width: parent.width * 0.19; text: "AUTHENTICATION"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.69; width: parent.width * 0.12; text: "STATUS"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.83; width: parent.width * 0.12; text: "LAST ACTIVE"; color: LedgerTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+            }
+            for signer[index] in root.signers: Rectangle { x: 1px; y: 93px + index * 45px; width: parent.width - 2px; height: 45px;
+                Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: LedgerTheme.border-soft; }
+                Rectangle { x: 13px; y: 9px; width: 27px; height: 27px; border-radius: 999px; background: #e2e8e2;
+                    Text { text: signer.initials; color: LedgerTheme.green; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                }
+                Text { x: 49px; width: parent.width * 0.19; text: signer.name; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 600; vertical-alignment: center; overflow: elide; }
+                Text { x: parent.width * 0.25; width: parent.width * 0.22; text: signer.role; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+                Text { x: parent.width * 0.48; width: parent.width * 0.19; text: "◇  " + signer.method; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+                LedgerStatus { x: parent.width * 0.69; y: 14px; width: parent.width * 0.12; label: signer.status; tone: signer.tone; }
+                Text { x: parent.width * 0.83; width: parent.width * 0.12; text: signer.last; color: LedgerTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+            }
+        }
+    }
+}
+
+component SettingsNavItem inherits Rectangle {
+    in property <string> label;
+    in property <IconName> icon-name;
+    in property <bool> selected;
+    callback clicked();
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.label;
+    accessible-action-default => { root.clicked(); }
+    height: 40px; background: root.selected ? #e5ebe6 : pointer.has-hover ? #f0eee8 : #00000000;
+    if root.selected: Rectangle { x: 0px; y: 0px; width: 2px; height: parent.height; background: LedgerTheme.green; }
+    AtlasIcon { x: 11px; y: 13px; size: 13px; name: root.icon-name; icon-color: root.selected ? LedgerTheme.green : LedgerTheme.muted; }
+    Text { x: 35px; width: parent.width - 53px; text: root.label; color: root.selected ? LedgerTheme.text : LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: root.selected ? 650 : 400; vertical-alignment: center; }
+    AtlasIcon { x: parent.width - 16px; y: 16px; size: 8px; name: IconName.chevron-right; icon-color: LedgerTheme.muted; }
+    pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.clicked(); } }
+}
+
+component LedgerSettingRow inherits AtlasSettingsRow {
+    height: 60px; title-y: 9px; title-height: 18px; description-y: 29px; description-height: 17px;
+    title-color: LedgerTheme.text; description-color: LedgerTheme.secondary;
+    title-font-size: 10px; description-font-size: 9px; title-font-weight: 600;
+    show-divider: true; divider-color: LedgerTheme.border-soft;
+}
+
+component ToggleSetting inherits LedgerSettingRow {
+    in-out property <bool> checked: true;
+    content-right-inset: 75px;
+    AtlasSwitch {
+        x: parent.width - 44px; y: 0px;
+        width: 44px; height: parent.height;
+        checked <=> root.checked;
+        show-label: false;
+        label: root.title;
+        track-offset-x: 10px;
+        track-width: 34px;
+        track-height: 18px;
+        track-padding: 2px;
+        track-radius: 9px;
+        track-border-width: 0px;
+        track-background: root.checked ? LedgerTheme.green : #d2cfc7;
+        thumb-size: 14px;
+        thumb-color: #ffffff;
+    }
+}
+
+component FieldSetting inherits LedgerSettingRow {
+    in property <string> value;
+    content-right-inset: 310px;
+    ToolField { x: parent.width - 285px; y: 14px; width: 285px; text: root.value; }
+}
+
+export component SettingsPage inherits Rectangle {
+    in property <string> capture-state;
+    in-out property <int> section: root.capture-state == "settings-currency" ? 1 : 0;
+    Rectangle { x: 27px; y: 30px; width: parent.width - 54px; height: 1100px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "09 / LEDGER CONFIGURATION"; title: "Settings"; subtitle: "Workspace, valuation, reporting, and data preferences."; }
+        LedgerButton { x: parent.width - 133px; y: 10px; width: 133px; text: "View Change Log"; show-icon: true; icon-name: IconName.logs; }
+        LedgerSurface { x: 0px; y: 129px; width: parent.width; height: 705px;
+            Rectangle { x: 0px; width: 235px; height: parent.height; background: #f0eee8;
+                Rectangle { x: parent.width - 1px; width: 1px; height: parent.height; background: LedgerTheme.border; }
+                SectionLabel { x: 13px; y: 17px; width: parent.width - 26px; text: "TREASURY SETTINGS"; }
+                SettingsNavItem { x: 9px; y: 43px; width: parent.width - 18px; label: "General"; icon-name: IconName.settings; selected: root.section == 0; clicked => { root.section = 0; } }
+                SettingsNavItem { x: 9px; y: 83px; width: parent.width - 18px; label: "Currency & Pricing"; icon-name: IconName.analytics; selected: root.section == 1; clicked => { root.section = 1; } }
+                SettingsNavItem { x: 9px; y: 123px; width: parent.width - 18px; label: "Reporting"; icon-name: IconName.logs; selected: root.section == 2; clicked => { root.section = 2; } }
+                SettingsNavItem { x: 9px; y: 163px; width: parent.width - 18px; label: "Notifications"; icon-name: IconName.bell; selected: root.section == 3; clicked => { root.section = 3; } }
+                SettingsNavItem { x: 9px; y: 203px; width: parent.width - 18px; label: "Data & Privacy"; icon-name: IconName.lock; selected: root.section == 4; clicked => { root.section = 4; } }
+                Rectangle { x: 14px; y: parent.height - 94px; width: parent.width - 28px; height: 77px; border-width: 1px; border-color: LedgerTheme.border; background: #f8f6f1;
+                    AtlasIcon { x: 10px; y: 14px; size: 15px; name: IconName.shield; icon-color: LedgerTheme.positive; }
+                    Text { x: 34px; y: 9px; width: parent.width - 44px; height: 20px; text: "Policy compliant"; color: LedgerTheme.text; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 650; vertical-alignment: center; }
+                    Text { x: 34px; y: 29px; width: parent.width - 44px; height: 18px; text: "Reviewed Aug 28, 2026"; color: LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                }
+            }
+            Rectangle { x: 235px; width: parent.width - 235px; height: parent.height;
+                SectionLabel { x: 27px; y: 20px; width: parent.width - 54px; text: root.section == 1 ? "CURRENCY & PRICING" : root.section == 0 ? "GENERAL" : "LEDGER SETTINGS"; }
+                Text { x: 27px; y: 38px; width: parent.width - 54px; height: 26px; text: root.section == 1 ? "Currency & Pricing" : root.section == 0 ? "General" : "Preferences"; color: LedgerTheme.text; font-family: "Georgia"; font-size: 19px; vertical-alignment: center; }
+                Text { x: 27px; y: 68px; width: parent.width - 54px; height: 18px; text: root.section == 1 ? "Manage currency & pricing preferences for the consolidated book." : "Manage general preferences for the consolidated book."; color: LedgerTheme.secondary; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                Rectangle { x: 27px; y: 102px; width: parent.width - 54px; height: 1px; background: LedgerTheme.border; }
+                SectionLabel { x: 27px; y: 118px; width: parent.width - 54px; text: root.section == 1 ? "VALUATION CURRENCY" : "WORKSPACE IDENTITY"; color: LedgerTheme.green; }
+                Rectangle { x: 27px; y: 140px; width: parent.width - 54px; height: 180px;
+                    FieldSetting { x: 0px; y: 0px; width: parent.width; title: root.section == 1 ? "Base currency" : "Treasury name"; description: root.section == 1 ? "Primary unit used for portfolio valuation." : "Displayed in reports, exports, and approvals."; value: root.section == 1 ? "USD — United States Dollar  ⌄" : "Demo Treasury"; }
+                    FieldSetting { x: 0px; y: 60px; width: parent.width; title: root.section == 1 ? "Price provider" : "Legal entity"; description: root.section == 1 ? "Reference source for simulated market values." : "Entity responsible for this consolidated book."; value: root.section == 1 ? "Demo Aggregate Pricing  ⌄" : "Example Treasury Entity"; }
+                    FieldSetting { x: 0px; y: 120px; width: parent.width; title: root.section == 1 ? "Display precision" : "Base currency"; description: root.section == 1 ? "Decimal detail used for portfolio totals." : "Primary unit used for portfolio valuation."; value: root.section == 1 ? "2 decimal places  ⌄" : "USD — United States Dollar  ⌄"; }
+                }
+                SectionLabel { x: 27px; y: 341px; width: parent.width - 54px; text: "VALUATION"; color: LedgerTheme.green; }
+                Rectangle { x: 27px; y: 363px; width: parent.width - 54px; height: 180px;
+                    ToggleSetting { x: 0px; y: 0px; width: parent.width; title: "Real-time pricing"; description: "Refresh market prices continuously while Ledger is open."; checked: true; }
+                    FieldSetting { x: 0px; y: 60px; width: parent.width; title: "Default cost basis"; description: "Method used for realized gain calculations."; value: "FIFO — First In, First Out  ⌄"; }
+                    FieldSetting { x: 0px; y: 120px; width: parent.width; title: "End-of-day timezone"; description: "Cutoff time used in official reports."; value: "UTC · 23:59  ⌄"; }
+                }
+                SectionLabel { x: 27px; y: 564px; width: parent.width - 54px; text: "GOVERNANCE"; color: LedgerTheme.green; }
+                ToggleSetting { x: 27px; y: 586px; width: parent.width - 54px; title: "Require approval for settings"; description: "Treasury administrators must review material changes."; checked: true; }
+                Rectangle { x: 1px; y: parent.height - 57px; width: parent.width - 2px; height: 56px; background: #f5f3ed;
+                    Rectangle { x: 0px; y: 0px; width: parent.width; height: 1px; background: LedgerTheme.border; }
+                    Text { x: 27px; y: 1px; width: parent.width - 180px; height: parent.height - 1px; text: "Last changed by Demo Administrator · Aug 28, 2026"; color: LedgerTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                    LedgerButton { x: parent.width - 127px; y: 12px; width: 100px; text: "Save Changes"; accent: true; }
+                }
+            }
+        }
+    }
+}

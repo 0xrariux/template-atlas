@@ -1,0 +1,222 @@
+import {
+    AtlasIcon, AtlasStatusIndicator, BadgeTone, IconName, AtlasTypography
+} from "@atlas-ui/stable.slint";
+import { FleetTheme } from "theme.slint";
+import { DeviceRecord, IncidentRecord } from "models.slint";
+import {
+    FleetSurface, InstrumentLabel, MonoText, FleetStatus, FleetMeter,
+    FleetTabs, FleetChart, FleetButton, SummaryCell
+} from "components.slint";
+
+component OverviewMetric inherits FleetSurface {
+    in property <string> label;
+    in property <string> index;
+    in property <string> value;
+    in property <string> unit;
+    in property <string> detail;
+    in property <string> footer-left;
+    in property <string> footer-right;
+    in property <int> tone: 0;
+    InstrumentLabel { x: 12px; y: 10px; width: parent.width - 45px; text: root.label; }
+    Text { x: parent.width - 31px; y: 9px; width: 20px; text: root.index; color: #415762; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+    Text { x: 12px; y: 34px; height: 37px; text: root.value; color: root.tone == 1 ? FleetTheme.warning : FleetTheme.text; font-family: AtlasTypography.font-mono; font-size: 28px; font-weight: 650; vertical-alignment: center; }
+    Text { x: 12px + value-text.preferred-width; y: 47px; height: 20px; text: root.unit; color: FleetTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 11px; vertical-alignment: center; }
+    value-text := Text { visible: false; text: root.value; font-family: AtlasTypography.font-mono; font-size: 28px; font-weight: 650; }
+    Text { x: 76px; y: 46px; width: parent.width - 88px; text: root.detail; color: root.tone == 1 ? FleetTheme.warning : FleetTheme.green; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; overflow: elide; }
+    Rectangle { x: 12px; y: 80px; width: parent.width - 24px; height: 1px; background: FleetTheme.border-soft; }
+    Text { x: 12px; y: 89px; width: parent.width - 24px; text: root.footer-left; color: root.tone == 1 ? FleetTheme.warning : #607681; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+    Text { x: 12px; y: 89px; width: parent.width - 24px; text: root.footer-right; color: #526873; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; overflow: elide; }
+}
+
+component DeviceCard inherits Rectangle {
+    in property <DeviceRecord> device;
+    in property <bool> selected;
+    callback clicked();
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.device.id;
+    accessible-action-default => { root.clicked(); }
+    height: 176px;
+    border-width: 1px;
+    border-color: root.selected ? FleetTheme.cyan : root.device.tone == 1 ? #684c29 : FleetTheme.border;
+    background: root.selected ? #14242b : FleetTheme.panel;
+    if root.selected: Rectangle { x: 0px; y: 0px; width: 2px; height: parent.height; background: FleetTheme.cyan; }
+    Rectangle { x: 0px; y: 0px; width: parent.width; height: 49px; border-width: 0px; background: #141d23;
+        Rectangle { x: 10px; y: 10px; width: 28px; height: 28px; border-width: 1px; border-color: root.device.tone == 1 ? #74532d : #2e525c; background: #14242b;
+            Text { x: 0px; width: parent.width; text: "DV"; color: root.device.tone == 1 ? FleetTheme.warning : FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 9px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+        }
+        Text { x: 47px; y: 8px; width: parent.width - 143px; height: 16px; text: root.device.id; color: #c8d4d9; font-family: AtlasTypography.font-mono; font-size: 11px; font-weight: 600; vertical-alignment: center; overflow: elide; }
+        Text { x: 47px; y: 26px; width: parent.width - 143px; height: 13px; text: root.device.model; color: FleetTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+        FleetStatus { x: parent.width - 89px; y: 16px; width: 78px; label: root.device.state; tone: root.device.tone; align-right: true; }
+        Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+    }
+    Rectangle { y: 49px; width: parent.width; height: 27px; background: #10181e;
+        AtlasIcon { x: 10px; y: 9px; size: 9px; name: IconName.globe; icon-color: #536b76; }
+        Text { x: 25px; width: parent.width - 130px; text: root.device.location; color: #657a85; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+        Text { x: 0px; width: parent.width - 10px; text: root.device.ip; color: #536873; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+    }
+    Rectangle { x: 10px; y: 85px; width: (parent.width - 30px) / 2; height: 27px;
+        InstrumentLabel { width: 34px; text: "CPU"; }
+        Text { x: 0px; width: parent.width; text: root.device.cpu + "%"; color: root.device.cpu > 75 ? FleetTheme.warning : #bcc9ce; font-family: AtlasTypography.font-mono; font-size: 10px; horizontal-alignment: right; vertical-alignment: center; }
+        FleetMeter { y: 22px; width: parent.width; value: root.device.cpu; meter-color: root.device.cpu > 75 ? FleetTheme.warning : FleetTheme.cyan; }
+    }
+    Rectangle { x: parent.width / 2 + 5px; y: 85px; width: (parent.width - 30px) / 2; height: 27px;
+        InstrumentLabel { width: 34px; text: "MEM"; }
+        Text { x: 0px; width: parent.width; text: root.device.memory; color: #bcc9ce; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+        FleetMeter { y: 22px; width: parent.width; value: root.device.memory-percent; }
+    }
+    InstrumentLabel { x: 10px; y: 122px; width: 35px; text: "TEMP"; }
+    Text { x: 47px; y: 122px; width: 60px; text: root.device.temp == 0 ? "—" : root.device.temp + "°C"; color: root.device.temp > 65 ? FleetTheme.warning : #a8b8bf; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    InstrumentLabel { x: parent.width / 2 + 5px; y: 122px; width: 35px; text: "DISK"; }
+    Text { x: parent.width / 2 + 43px; y: 122px; width: 50px; text: root.device.disk + "%"; color: #a8b8bf; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Rectangle { y: 146px; width: parent.width; height: 30px; background: #10181e;
+        AtlasStatusIndicator {
+            x: 11px; y: 12px; width: 5px; height: 5px;
+            label: root.device.services > 0 ? "Services active" : "No active services";
+            tone: root.device.services > 0 ? BadgeTone.healthy : BadgeTone.neutral;
+            indicator-color: root.device.services > 0 ? FleetTheme.green : #536873;
+        }
+        Text { x: 23px; text: root.device.services + " SERVICES"; color: #607681; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+        Text { x: 0px; width: parent.width - 12px; text: "•••"; color: #536873; font-family: AtlasTypography.font-mono; font-size: 10px; horizontal-alignment: right; vertical-alignment: center; }
+    }
+    pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.clicked(); } }
+}
+
+component DeviceInspector inherits FleetSurface {
+    in property <DeviceRecord> device;
+    in-out property <int> telemetry-series: 0;
+    in-out property <int> telemetry-period: 1;
+    callback restart();
+    Rectangle { x: 0px; y: 0px; width: parent.width; height: 64px; background: #151e24;
+        InstrumentLabel { x: 13px; y: 8px; width: parent.width - 50px; text: "SELECTED DEVICE"; }
+        Text { x: 13px; y: 24px; width: parent.width - 50px; height: 18px; text: root.device.id; color: FleetTheme.text; font-family: AtlasTypography.font-mono; font-size: 13px; font-weight: 600; vertical-alignment: center; }
+        Text { x: 13px; y: 43px; width: parent.width - 50px; height: 12px; text: "DEV-" + root.device.id + "-0042"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+        AtlasIcon { x: parent.width - 27px; y: 18px; size: 12px; name: IconName.close; icon-color: #5c717c; }
+        Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border; }
+    }
+    Rectangle { y: 64px; width: parent.width; height: 67px;
+        Rectangle { x: 13px; y: 16px; width: 35px; height: 35px; border-width: 1px; border-color: #2e535d; background: #14242b;
+            AtlasIcon { x: 9px; y: 9px; size: 17px; name: root.device.kind == "ARM64" ? IconName.cpu : IconName.database; icon-color: FleetTheme.cyan; }
+        }
+        Text { x: 58px; y: 14px; width: parent.width - 145px; height: 17px; text: root.device.model; color: #c4cfd4; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 600; vertical-alignment: center; overflow: elide; }
+        Text { x: 58px; y: 34px; width: parent.width - 145px; height: 14px; text: root.device.kind + " · " + root.device.ip; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+        FleetStatus { x: parent.width - 88px; y: 25px; width: 76px; label: root.device.state; tone: root.device.tone; align-right: true; }
+    }
+    Rectangle { x: 13px; y: 131px; width: parent.width - 26px; height: 31px;
+        HorizontalLayout { spacing: 5px;
+            FleetButton { text: "SSH"; show-icon: true; icon-name: IconName.terminal; horizontal-stretch: 1; }
+            FleetButton { text: "Restart"; show-icon: true; icon-name: IconName.refresh; horizontal-stretch: 1; clicked => { root.restart(); } }
+            FleetButton { text: "Deploy"; show-icon: true; icon-name: IconName.download; horizontal-stretch: 1; }
+        }
+    }
+    Rectangle { x: 13px; y: 178px; width: parent.width - 26px; height: 283px; border-width: 1px; border-color: FleetTheme.border; background: #10181e;
+        InstrumentLabel { x: 10px; y: 9px; width: 120px; text: "REALTIME TELEMETRY"; }
+        FleetTabs { x: parent.width - 165px; y: 6px; width: 155px; height: 24px; labels: ["CPU", "MEM", "NET", "TMP"]; selected-index <=> root.telemetry-series; }
+        Text { x: 10px; y: 37px; height: 31px; text: root.telemetry-series == 1 ? "64" : root.telemetry-series == 2 ? "49" : root.telemetry-series == 3 ? "48" : root.device.cpu; color: FleetTheme.text; font-family: AtlasTypography.font-mono; font-size: 25px; font-weight: 650; vertical-alignment: center; }
+        Text { x: 53px; y: 48px; text: root.telemetry-series == 2 ? "Mbps" : root.telemetry-series == 3 ? "°C" : "%"; color: FleetTheme.secondary; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+        InstrumentLabel { x: 115px; y: 39px; width: 48px; text: "CURRENT"; }
+        InstrumentLabel { x: 174px; y: 39px; width: 48px; text: "AVERAGE"; }
+        InstrumentLabel { x: 235px; y: 39px; width: 48px; text: "PEAK"; }
+        MonoText { x: 115px; y: 53px; width: 48px; text: root.telemetry-series == 1 ? "64%" : root.device.cpu + "%"; }
+        MonoText { x: 174px; y: 53px; width: 48px; text: "48%"; }
+        MonoText { x: 235px; y: 53px; width: 48px; text: "78%"; }
+        FleetChart { x: 10px; y: 78px; width: parent.width - 20px; height: 137px; series: root.telemetry-series; }
+        FleetTabs { x: 10px; y: 239px; width: parent.width - 20px; height: 29px; labels: ["15M", "1H", "6H", "24H", "7D"]; selected-index <=> root.telemetry-period; }
+    }
+}
+
+export component FleetOverview inherits Rectangle {
+    in property <[DeviceRecord]> devices;
+    in property <[IncidentRecord]> incidents;
+    in property <string> capture-state;
+    in-out property <int> selected-device: root.capture-state == "overview-device-warning" || root.capture-state == "overview-telemetry-memory" || root.capture-state == "overview-telemetry-24h" || root.capture-state == "restart-confirmation" ? 1 : 0;
+    in-out property <int> filter: root.capture-state == "overview-filter-online" ? 1 : root.capture-state == "overview-filter-warning" ? 2 : root.capture-state == "overview-filter-offline" ? 3 : 0;
+    in-out property <bool> list-view: root.capture-state == "overview-list";
+    in-out property <int> telemetry-series: root.capture-state == "overview-telemetry-memory" ? 1 : 0;
+    in-out property <int> telemetry-period: root.capture-state == "overview-telemetry-24h" ? 3 : 1;
+    callback restart();
+    Rectangle {
+        x: 0px; y: 0px; width: parent.width; height: parent.height; background: FleetTheme.canvas;
+            Rectangle {
+                x: 24px; y: 22px; width: parent.width - 48px; height: 67px;
+                InstrumentLabel { x: 0px; y: 0px; width: 280px; text: "MISSION STATUS / 14:42:18 CET"; }
+                Text { x: 0px; y: 19px; height: 29px; text: "Infrastructure is"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 23px; font-weight: 650; vertical-alignment: center; }
+                Text { x: 181px; y: 19px; height: 29px; text: "operational."; color: FleetTheme.cyan; font-family: AtlasTypography.font-sans; font-size: 23px; font-weight: 650; vertical-alignment: center; }
+                Text { x: 0px; y: 52px; text: "24 of 26 devices reporting nominal telemetry."; color: #637984; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; }
+                Rectangle { x: parent.width - 330px; y: 21px; width: 330px; height: 27px;
+                    for tick in 31: Rectangle { x: tick * (parent.width / 31); y: mod(tick, 5) == 0 ? 1px : 8px; width: 1px; height: mod(tick, 5) == 0 ? 18px : 10px; background: mod(tick, 5) == 0 ? #49626d : #2a3d46; }
+                    Text { x: 0px; y: 18px; width: parent.width; text: "SYS 100"; color: #4f6671; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; }
+                }
+            }
+            GridLayout {
+                x: 24px; y: 111px; width: parent.width - 48px; height: 128px;
+                spacing: 8px;
+                OverviewMetric { row: 0; col: 0; label: "ONLINE DEVICES"; index: "01"; value: "24"; detail: "+2 THIS WEEK"; footer-left: "▮ ▮ ▮ ▮ ▮"; footer-right: "92.3% CONNECTED"; }
+                OverviewMetric { row: 0; col: 1; label: "OFFLINE"; index: "02"; value: "2"; detail: "REQUIRES ATTENTION"; footer-left: "EDGE-DEMO-03 / CAM-07"; tone: 1; }
+                OverviewMetric { row: 0; col: 2; label: "AVG CPU"; index: "03"; value: "68"; unit: "%"; detail: "⌁⌁⌁"; footer-left: "NOMINAL LOAD"; footer-right: "PEAK 84%"; }
+                OverviewMetric { row: 0; col: 3; label: "AVG TEMP"; index: "04"; value: "41"; unit: "°C"; detail: "THERMAL"; footer-left: "THERMAL NORMAL"; footer-right: "MAX 72°C"; }
+                OverviewMetric { row: 0; col: 4; label: "ACTIVE SERVICES"; index: "05"; value: "12"; detail: "▦"; footer-left: "41 INSTANCES"; footer-right: "1 DEGRADED"; }
+            }
+            Rectangle {
+                x: 24px; y: 265px; width: parent.width - 48px; height: 35px;
+                InstrumentLabel { x: 0px; y: 0px; width: 150px; text: "02 / DEVICES"; }
+                Text { x: 0px; y: 16px; height: 23px; text: "Connected infrastructure"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 650; vertical-alignment: center; }
+                FleetTabs { x: parent.width - 321px; y: 7px; width: 216px; labels: ["ALL", "ONLINE", "WARNING", "OFFLINE"]; selected-index <=> root.filter; }
+                FleetTabs { x: parent.width - 97px; y: 7px; width: 97px; labels: ["GRID", "LIST"]; selected-index: root.list-view ? 1 : 0; selected(index) => { root.list-view = index == 1; } }
+            }
+            Rectangle {
+                x: 24px; y: 308px; width: parent.width - 48px; height: 558px;
+                Rectangle {
+                    x: 0px; y: 0px; width: parent.width - 339px; height: parent.height;
+                    for device[index] in root.devices: DeviceCard {
+                        private property <bool> matches: root.filter == 0 || (root.filter == 1 && device.tone == 0) || (root.filter == 2 && device.tone == 1) || (root.filter == 3 && device.tone == 3);
+                        private property <int> display-index: root.filter == 0 ? index : root.filter == 1 ? (index == 0 ? 0 : index == 2 ? 1 : 2) : 0;
+                        visible: self.matches;
+                        x: root.list-view ? 0px : mod(self.display-index, 2) * ((parent.width + 8px) / 2);
+                        y: root.list-view ? self.display-index * 80px : floor(self.display-index / 2) * 184px;
+                        width: root.list-view ? parent.width : (parent.width - 8px) / 2;
+                        height: root.list-view ? 72px : 176px;
+                        device: device; selected: root.selected-device == index;
+                        clicked => { root.selected-device = index; }
+                    }
+                }
+                DeviceInspector { x: parent.width - 330px; y: 0px; width: 330px; height: 470px; device: root.devices[root.selected-device]; telemetry-series <=> root.telemetry-series; telemetry-period <=> root.telemetry-period; restart => { root.restart(); } }
+            }
+            Rectangle {
+                x: 24px; y: 880px; width: parent.width - 48px; height: 374px;
+                FleetSurface {
+                    x: 0px; y: 0px; width: (parent.width - 9px) * 0.58; height: parent.height;
+                    InstrumentLabel { x: 13px; y: 13px; width: 150px; text: "03 / INCIDENTS"; }
+                    Text { x: 13px; y: 30px; text: "Active alerts"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 13px; font-weight: 650; vertical-alignment: center; }
+                    Text { x: 0px; width: parent.width - 13px; y: 20px; text: "VIEW ALL  ›"; color: FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                    Rectangle { y: 56px; width: parent.width; height: 1px; background: FleetTheme.border; }
+                    for incident[index] in root.incidents: Rectangle {
+                        x: 12px; y: 68px + index * 76px; width: parent.width - 24px; height: 65px;
+                        border-width: 1px; border-color: incident.tone == 2 ? #533036 : #594327; background: #111920;
+                        AtlasIcon { x: 11px; y: 13px; size: 14px; name: IconName.warning; icon-color: incident.tone == 2 ? FleetTheme.danger : FleetTheme.warning; }
+                        InstrumentLabel { x: 35px; y: 8px; width: 140px; text: incident.severity; color: incident.tone == 2 ? FleetTheme.danger : FleetTheme.warning; }
+                        Text { x: 35px; y: 25px; width: parent.width - 150px; text: incident.device; color: #c4cfd4; font-family: AtlasTypography.font-mono; font-size: 10px; font-weight: 600; vertical-alignment: center; }
+                        Text { x: 35px; y: 42px; width: parent.width - 150px; text: incident.detail; color: FleetTheme.muted; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; overflow: elide; }
+                        Text { x: 0px; width: parent.width - 13px; y: 16px; text: incident.time; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+                    }
+                }
+                FleetSurface {
+                    x: (parent.width - 9px) * 0.58 + 9px; y: 0px; width: parent.width - self.x; height: parent.height;
+                    InstrumentLabel { x: 13px; y: 13px; width: 150px; text: "04 / DEPLOYMENT"; }
+                    Text { x: 13px; y: 31px; text: "Atlas Agent 1.4.2"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 13px; font-weight: 650; vertical-alignment: center; }
+                    Text { x: 0px; width: parent.width - 13px; y: 24px; text: "75%"; color: FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 20px; font-weight: 650; horizontal-alignment: right; vertical-alignment: center; }
+                    Rectangle { x: 13px; y: 68px; width: parent.width - 26px; height: 46px; background: #0f171c;
+                        for segment in 24: Rectangle { x: segment * (parent.width / 24); width: parent.width / 24 - 2px; height: parent.height; background: segment < 18 ? #287f78 : segment == 18 ? FleetTheme.danger : #253640; }
+                    }
+                    GridLayout { x: 13px; y: 134px; width: parent.width - 26px; height: 69px; spacing: 1px;
+                        SummaryCell { row:0; col:0; label:"COMPLETED"; value:"18"; detail:"DEVICES"; icon-name:IconName.check; tone-color:FleetTheme.green; }
+                        SummaryCell { row:0; col:1; label:"DEPLOYING"; value:"2"; detail:"DEVICES"; icon-name:IconName.download; }
+                        SummaryCell { row:0; col:2; label:"QUEUED"; value:"3"; detail:"DEVICES"; icon-name:IconName.clock; tone-color:FleetTheme.secondary; }
+                        SummaryCell { row:0; col:3; label:"FAILED"; value:"1"; detail:"DEVICE"; icon-name:IconName.warning; tone-color:FleetTheme.danger; }
+                    }
+                    Rectangle { x: 13px; y: 226px; width: parent.width - 26px; height: 1px; background: FleetTheme.border; }
+                    MonoText { x: 13px; y: 242px; width: 150px; text: "STARTED 14:02"; }
+                    Text { x: 0px; width: parent.width - 13px; y: 242px; text: "OPEN DEPLOYMENT  ›"; color: FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+                }
+            }
+    }
+}

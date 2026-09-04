@@ -1,0 +1,270 @@
+import {
+    AtlasButton, AtlasIconButton, AtlasStatusIndicator,
+    AtlasSwitch, AtlasIcon, IconName, BadgeTone, Density,
+    Surface, AtlasTypography
+} from "@atlas-ui/stable.slint";
+import {
+    AtlasProgressBar, ProgressTone, AtlasChartFrame
+} from "@atlas-ui/preview-nonresponsive.slint";
+import { FleetTheme } from "theme.slint";
+
+export component FleetSurface inherits Surface {
+    density: Density.compact;
+    raised: false;
+    background: FleetTheme.panel;
+    border-color: FleetTheme.border;
+    border-width: 1px;
+    border-radius: 0px;
+}
+
+// Fleet tables keep application-owned selection while sharing a consistent
+// hover, press and focus treatment across inventory, telemetry and workflows.
+export component FleetTableRow inherits Rectangle {
+    in property <string> row-label;
+    in property <bool> selected: false;
+    in property <color> base-background: FleetTheme.panel;
+    in property <color> hover-background: #16242b;
+    in property <color> selected-background: #183039;
+    in property <color> selection-color: FleetTheme.cyan;
+    callback clicked();
+
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.row-label;
+    accessible-action-default => { root.clicked(); }
+    background: root.selected ? root.selected-background
+        : pointer.pressed ? #1b333c
+        : pointer.has-hover ? root.hover-background
+        : root.base-background;
+    animate background { duration: 120ms; }
+
+    @children
+
+    Rectangle {
+        x: parent.width - 2px; y: 0px; width: 2px; height: parent.height;
+        background: root.selection-color;
+        opacity: root.selected ? 1 : 0;
+        animate opacity { duration: 120ms; }
+    }
+    pointer := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+export component FleetButton inherits AtlasButton {
+    in property <bool> accent: false;
+    density: Density.compact;
+    height: 31px;
+    border-radius: 0px;
+    border-color: root.accent ? #2d7d85 : #2b3c45;
+    background: root.accent
+        ? (root.pressed ? #185e66 : root.hovered ? #247881 : #1d6971)
+        : (root.pressed ? #1a252c : root.hovered ? #18242a : #111920);
+}
+
+export component FleetIconButton inherits AtlasIconButton {
+    density: Density.compact;
+    width: 31px;
+    height: 31px;
+    border-radius: 0px;
+    border-color: #2b3c45;
+    background: root.pressed ? #1a252c : root.hovered ? #18242a : #111920;
+}
+
+export component FleetSwitch inherits AtlasSwitch {
+    width: 31px;
+    height: 16px;
+    show-label: false;
+    track-offset-x: 0px;
+    track-width: 31px;
+    track-height: 16px;
+    track-padding: 2px;
+    track-radius: 8px;
+    track-border-width: 0px;
+    track-border-color: #00000000;
+    track-background: root.checked ? #215d63 : #283940;
+    thumb-size: 12px;
+    thumb-color: root.checked ? FleetTheme.cyan : #70818a;
+}
+
+export component InstrumentLabel inherits Text {
+    height: 13px;
+    color: FleetTheme.muted;
+    font-family: AtlasTypography.font-mono;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    vertical-alignment: center;
+}
+
+export component MonoText inherits Text {
+    height: 14px;
+    color: FleetTheme.secondary;
+    font-family: AtlasTypography.font-mono;
+    font-size: 10px;
+    vertical-alignment: center;
+}
+
+export component FleetStatus inherits Rectangle {
+    in property <string> label;
+    in property <int> tone: 0;
+    in property <bool> align-right: false;
+    in property <color> tone-color: root.tone == 0 ? FleetTheme.green
+        : root.tone == 1 ? FleetTheme.warning
+        : root.tone == 2 ? FleetTheme.purple : FleetTheme.danger;
+    height: 16px;
+    width: 78px;
+    AtlasStatusIndicator {
+        x: root.align-right ? parent.width - label-text.preferred-width - 12px : 0px;
+        y: 5px; width: 5px; height: 5px;
+        label: root.label;
+        tone: root.tone == 0 ? BadgeTone.healthy : root.tone == 1 ? BadgeTone.warning : root.tone == 3 ? BadgeTone.danger : BadgeTone.neutral;
+        indicator-color: root.tone-color;
+    }
+    label-text := Text {
+        x: root.align-right ? parent.width - self.preferred-width : 10px;
+        width: self.preferred-width;
+        text: root.label;
+        color: root.tone-color;
+        font-family: AtlasTypography.font-mono;
+        font-size: 9px;
+        vertical-alignment: center;
+    }
+}
+
+export component FleetMeter inherits Rectangle {
+    in property <float> value;
+    in property <color> meter-color: FleetTheme.cyan;
+    height: 3px;
+    AtlasProgressBar {
+        x: 0px; y: 0px; width: parent.width; height: parent.height;
+        value: root.value; maximum: 100; show-labels: false;
+        track-height: parent.height; track-radius: 0px;
+        track-color: #253640; indicator-color: root.meter-color;
+        tone: ProgressTone.neutral;
+    }
+}
+
+export component FleetTabs inherits Rectangle {
+    in property <[string]> labels;
+    in-out property <int> selected-index: 0;
+    callback selected(int);
+    height: 30px;
+    border-width: 1px; border-color: #2a3c45; background: #0e151a;
+    HorizontalLayout {
+        x: 0px; y: 0px; width: parent.width; height: parent.height; spacing: 0px;
+        for label[index] in root.labels: Rectangle {
+            accessible-role: AccessibleRole.button;
+            accessible-label: label;
+            accessible-action-default => {
+                root.selected-index = index;
+                root.selected(index);
+            }
+            border-width: 0px;
+            border-color: #2a3c45;
+            background: root.selected-index == index ? #1a3037 : pointer.has-hover ? #142128 : #0e151a;
+            Text { x: 0px; width: parent.width; text: label; color: root.selected-index == index ? FleetTheme.cyan : #607681; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: center; vertical-alignment: center; }
+            if index > 0: Rectangle { x: 0px; y: 0px; width: 1px; height: parent.height; background: #2a3c45; }
+            pointer := TouchArea {
+                mouse-cursor: MouseCursor.pointer;
+                clicked => {
+                    root.selected-index = index;
+                    root.selected(index);
+                }
+            }
+        }
+    }
+}
+
+export component PageHeading inherits Rectangle {
+    in property <string> eyebrow;
+    in property <string> title;
+    in property <string> subtitle;
+    height: 66px;
+    InstrumentLabel { x: 0px; y: 0px; width: parent.width; text: root.eyebrow; }
+    Text { x: 0px; y: 18px; width: parent.width; height: 30px; text: root.title; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 25px; font-weight: 700; vertical-alignment: center; }
+    Text { x: 0px; y: 52px; width: parent.width; height: 13px; text: root.subtitle; color: #627782; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; }
+}
+
+export component SummaryCell inherits FleetSurface {
+    in property <string> label;
+    in property <string> value;
+    in property <string> detail;
+    in property <IconName> icon-name: IconName.activity;
+    in property <color> tone-color: FleetTheme.cyan;
+    private property <length> content-y: (root.height - 54px) / 2;
+    AtlasIcon { x: 14px; y: (root.height - self.size) / 2; size: 20px; name: root.icon-name; icon-color: root.tone-color; }
+    InstrumentLabel { x: 46px; y: root.content-y; width: parent.width - 58px; text: root.label; }
+    Text { x: 46px; y: root.content-y + 18px; width: parent.width - 58px; height: 19px; text: root.value; color: FleetTheme.text; font-family: AtlasTypography.font-mono; font-size: 15px; font-weight: 600; vertical-alignment: center; }
+    Text { x: 46px; y: root.content-y + 40px; width: parent.width - 58px; height: 14px; text: root.detail; color: FleetTheme.muted; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; overflow: elide; }
+}
+
+export component FleetChart inherits AtlasChartFrame {
+    in property <int> series: 0;
+    in property <color> line-color: FleetTheme.cyan;
+    private property <float> path-width: max(
+        1,
+        root.width / 1px * 190 / max(1, (root.height - 14px) / 1px)
+    );
+    label: "Fleet telemetry trend";
+    description: root.series == 1 ? "Memory utilization over the selected period"
+        : "CPU utilization over the selected period";
+    horizontal-lines: 4;
+    vertical-lines: 9;
+    grid-line-width: 1px;
+    horizontal-line-color: #263740;
+    vertical-line-color: #1d2b32;
+    plot-background: #0f171c;
+    // Match the viewbox ratio to the rendered panel so the native path uses
+    // the full chart width in both the overview inspector and Metrics page.
+    Path {
+        x: 0px; y: 7px; width: root.width; height: root.height - 14px;
+        viewbox-width: root.path-width; viewbox-height: 190;
+        fill: #2bc0d018; stroke: #00000000;
+        MoveTo { x: 0; y: 190; }
+        LineTo { x: 0; y: root.series == 1 ? 132 : 154; }
+        LineTo { x: root.path-width * 0.077; y: root.series == 1 ? 126 : 132; }
+        LineTo { x: root.path-width * 0.153; y: root.series == 1 ? 131 : 142; }
+        LineTo { x: root.path-width * 0.231; y: root.series == 1 ? 116 : 104; }
+        LineTo { x: root.path-width * 0.307; y: root.series == 1 ? 105 : 116; }
+        LineTo { x: root.path-width * 0.385; y: root.series == 1 ? 98 : 73; }
+        LineTo { x: root.path-width * 0.461; y: root.series == 1 ? 87 : 88; }
+        LineTo { x: root.path-width * 0.539; y: root.series == 1 ? 92 : 53; }
+        LineTo { x: root.path-width * 0.615; y: root.series == 1 ? 76 : 74; }
+        LineTo { x: root.path-width * 0.692; y: root.series == 1 ? 63 : 96; }
+        LineTo { x: root.path-width * 0.769; y: root.series == 1 ? 68 : 62; }
+        LineTo { x: root.path-width * 0.846; y: root.series == 1 ? 51 : 79; }
+        LineTo { x: root.path-width * 0.924; y: root.series == 1 ? 46 : 111; }
+        LineTo { x: root.path-width; y: root.series == 1 ? 39 : 84; }
+        LineTo { x: root.path-width; y: 190; }
+        Close { }
+    }
+    Path {
+        x: 0px; y: 7px; width: root.width; height: root.height - 14px;
+        viewbox-width: root.path-width; viewbox-height: 190;
+        fill: #00000000; stroke: root.line-color; stroke-width: 2px;
+        MoveTo { x: 0; y: root.series == 1 ? 132 : 154; }
+        LineTo { x: root.path-width * 0.077; y: root.series == 1 ? 126 : 132; }
+        LineTo { x: root.path-width * 0.153; y: root.series == 1 ? 131 : 142; }
+        LineTo { x: root.path-width * 0.231; y: root.series == 1 ? 116 : 104; }
+        LineTo { x: root.path-width * 0.307; y: root.series == 1 ? 105 : 116; }
+        LineTo { x: root.path-width * 0.385; y: root.series == 1 ? 98 : 73; }
+        LineTo { x: root.path-width * 0.461; y: root.series == 1 ? 87 : 88; }
+        LineTo { x: root.path-width * 0.539; y: root.series == 1 ? 92 : 53; }
+        LineTo { x: root.path-width * 0.615; y: root.series == 1 ? 76 : 74; }
+        LineTo { x: root.path-width * 0.692; y: root.series == 1 ? 63 : 96; }
+        LineTo { x: root.path-width * 0.769; y: root.series == 1 ? 68 : 62; }
+        LineTo { x: root.path-width * 0.846; y: root.series == 1 ? 51 : 79; }
+        LineTo { x: root.path-width * 0.924; y: root.series == 1 ? 46 : 111; }
+        LineTo { x: root.path-width; y: root.series == 1 ? 39 : 84; }
+    }
+}
+
+export component ToolField inherits Rectangle {
+    in property <string> text;
+    in property <IconName> icon-name: IconName.none;
+    height: 31px;
+    border-width: 1px; border-color: #2a3c45; background: #0e151a;
+    if root.icon-name != IconName.none: AtlasIcon { x: 8px; y: 10px; size: 11px; name: root.icon-name; icon-color: FleetTheme.muted; }
+    Text { x: root.icon-name == IconName.none ? 9px : 27px; width: parent.width - self.x - 9px; text: root.text; color: #738791; font-family: AtlasTypography.font-mono; font-size: 10px; vertical-alignment: center; overflow: elide; }
+}

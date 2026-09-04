@@ -1,0 +1,268 @@
+import {
+    AtlasButton, AtlasIconButton, AtlasSwitch,
+    AtlasStatusIndicator, AtlasIcon, IconName, BadgeTone, Density,
+    Surface, AtlasTypography
+} from "@atlas-ui/stable.slint";
+import { ForgeTheme } from "theme.slint";
+
+export component ForgeSurface inherits Surface {
+    density: Density.compact;
+    raised: false;
+    background: ForgeTheme.panel;
+    border-color: ForgeTheme.border;
+    border-width: 1px;
+    border-radius: 0px;
+}
+
+export component ForgeButton inherits AtlasButton {
+    in property <bool> accent: false;
+    density: Density.compact;
+    height: 29px;
+    border-radius: 3px;
+    border-color: root.accent ? #c18432 : #343a3e;
+    background: root.accent
+        ? (root.pressed ? #bc7e2d : root.hovered ? #dfa041 : ForgeTheme.action)
+        : (root.pressed ? #282d31 : root.hovered ? #25292c : #1c2023);
+}
+
+export component ForgeIconButton inherits AtlasIconButton {
+    density: Density.compact;
+    width: 29px;
+    height: 29px;
+    border-radius: 3px;
+    border-color: #343a3e;
+    background: root.pressed ? #282d31 : root.hovered ? #25292c : #1c2023;
+}
+
+export component ForgeStatusDot inherits AtlasStatusIndicator {
+    width: 6px;
+    height: 6px;
+    tone: BadgeTone.neutral;
+}
+
+export component MicroLabel inherits Text {
+    height: 14px;
+    vertical-stretch: 0;
+    color: ForgeTheme.muted;
+    font-family: AtlasTypography.font-sans;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    vertical-alignment: center;
+}
+
+export component MonoLabel inherits Text {
+    height: 14px;
+    vertical-stretch: 0;
+    color: ForgeTheme.secondary;
+    font-family: AtlasTypography.font-mono;
+    font-size: 10px;
+    vertical-alignment: center;
+}
+
+export component PanelRule inherits Rectangle {
+    height: 1px;
+    background: ForgeTheme.border;
+}
+
+export component ActivityButton inherits Rectangle {
+    in property <string> label;
+    in property <IconName> icon-name: IconName.grid;
+    in property <bool> selected: false;
+    in property <string> badge;
+    callback clicked();
+
+    height: 43px;
+    background: root.selected ? #26251f
+        : pointer.pressed ? #24272a
+        : pointer.has-hover ? #1c2023 : #00000000;
+    animate background { duration: 110ms; }
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.label;
+    accessible-action-default => { root.clicked(); }
+
+    if root.selected: Rectangle {
+        x: 0px; y: 0px; width: 3px; height: parent.height; background: ForgeTheme.accent;
+    }
+    AtlasIcon {
+        x: (parent.width - 19px) / 2;
+        y: 12px;
+        size: 19px;
+        name: root.icon-name;
+        icon-color: root.selected ? ForgeTheme.accent : #687078;
+    }
+    if root.badge != "": Rectangle {
+        x: parent.width - 19px; y: 4px; width: 14px; height: 14px;
+        border-radius: 7px; background: #9c6e2b;
+        Text { text: root.badge; color: #ffffff; font-family: AtlasTypography.font-sans; font-size: 9px; horizontal-alignment: center; vertical-alignment: center; }
+    }
+    pointer := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+export component DenseRow inherits Rectangle {
+    in property <string> label;
+    in property <string> meta;
+    in property <IconName> icon-name: IconName.logs;
+    in property <bool> selected: false;
+    in property <int> depth: 0;
+    in property <color> icon-color: #c0863e;
+    callback clicked();
+
+    height: 31px;
+    clip: true;
+    background: root.selected ? ForgeTheme.selected
+        : pointer.pressed ? #292a26
+        : pointer.has-hover ? #1f2327 : #00000000;
+    animate background { duration: 110ms; }
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.label;
+    accessible-action-default => { root.clicked(); }
+    AtlasIcon { x: 9px + root.depth * 15px; y: 9px; size: 13px; name: root.icon-name; icon-color: root.icon-color; }
+    Text {
+        x: 29px + root.depth * 15px; width: parent.width - self.x - 30px;
+        text: root.label; color: root.selected ? #f0c473 : #aeb5bb;
+        font-family: AtlasTypography.font-sans; font-size: 10px;
+        vertical-alignment: center; overflow: elide;
+    }
+    Text {
+        width: parent.width - 9px; text: root.meta;
+        color: root.meta == "A" ? ForgeTheme.success : ForgeTheme.accent;
+        font-family: AtlasTypography.font-mono; font-size: 9px;
+        horizontal-alignment: right; vertical-alignment: center;
+    }
+    pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.clicked(); } }
+}
+
+export component ForgeWorkspaceTab inherits Rectangle {
+    in property <string> tab-id;
+    in property <string> text;
+    in property <bool> selected: false;
+    in property <bool> dirty: false;
+    in property <bool> closable: false;
+    in property <IconName> forge-icon: IconName.logs;
+    callback activated();
+    callback close-requested();
+    height: 36px;
+    min-width: 125px;
+    max-width: 145px;
+    border-radius: 0px;
+    background: root.selected ? ForgeTheme.canvas
+        : pointer.pressed ? #25292c
+        : pointer.has-hover ? #202428 : ForgeTheme.panel;
+    animate background { duration: 110ms; }
+    accessible-role: AccessibleRole.tab;
+    accessible-label: root.text;
+    accessible-action-default => { root.activated(); }
+
+    Rectangle {
+        width: parent.width; height: parent.height;
+        background: #00000000;
+        border-width: 0px;
+        if root.selected: Rectangle { x: 0px; y: 0px; width: parent.width; height: 2px; background: ForgeTheme.accent; }
+        AtlasIcon { x: 11px; y: 12px; size: 12px; name: root.forge-icon; icon-color: root.dirty ? #d79a3d : #a97532; }
+        Text {
+            x: 32px; width: parent.width - 59px; text: root.text;
+            color: root.selected ? #e0e3e5 : #858d94;
+            font-family: AtlasTypography.font-sans; font-size: 10px;
+            vertical-alignment: center; overflow: elide;
+        }
+        if root.dirty: Rectangle { x: parent.width - 27px; y: 16px; width: 4px; height: 4px; border-radius: 2px; background: ForgeTheme.accent; }
+    }
+    pointer := TouchArea {
+        x: 0px; y: 0px; width: root.closable ? parent.width - 22px : parent.width; height: parent.height;
+        mouse-cursor: MouseCursor.pointer;
+        clicked => { root.activated(); }
+    }
+    if root.closable: Rectangle {
+        x: parent.width - 22px; y: 0px; width: 22px; height: parent.height;
+        background: close-pointer.pressed ? #49302a : close-pointer.has-hover ? #342823 : #00000000;
+        animate background { duration: 100ms; }
+        AtlasIcon { x: 6px; y: 13px; size: 10px; name: IconName.close; icon-color: close-pointer.has-hover ? #e2b15d : #60686f; }
+        accessible-role: AccessibleRole.button;
+        accessible-label: "Close " + root.text;
+        accessible-action-default => { root.close-requested(); }
+        close-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.close-requested(); } }
+    }
+}
+
+export component ForgeSwitch inherits AtlasSwitch {
+    width: 31px;
+    height: 16px;
+    show-label: false;
+    track-offset-x: 0px;
+    track-width: 31px;
+    track-height: 16px;
+    track-padding: 2px;
+    track-radius: 8px;
+    track-border-width: 0px;
+    track-border-color: #00000000;
+    track-background: root.checked ? #755624 : #353b40;
+    thumb-size: 12px;
+    thumb-color: root.checked ? ForgeTheme.accent : #858d93;
+}
+
+export component PageHeading inherits Rectangle {
+    in property <string> eyebrow;
+    in property <string> title;
+    in property <string> subtitle;
+    height: 73px;
+    MicroLabel { y: 0px; width: parent.width; height: 12px; text: root.eyebrow; }
+    Text {
+        y: 17px; width: parent.width; height: 34px; text: root.title;
+        color: ForgeTheme.text; font-family: AtlasTypography.font-sans;
+        font-size: 27px; font-weight: 700; letter-spacing: -1px;
+        vertical-alignment: center;
+    }
+    Text {
+        y: 55px; width: parent.width; height: 13px; text: root.subtitle;
+        color: ForgeTheme.muted; font-family: AtlasTypography.font-sans;
+        font-size: 10px; vertical-alignment: center;
+    }
+}
+
+export component FieldFrame inherits Rectangle {
+    in property <string> text;
+    in property <string> placeholder;
+    in property <bool> mono: false;
+    in property <IconName> icon-name: IconName.none;
+    height: 30px;
+    border-width: 1px; border-color: #31373b; background: #111315;
+    if root.icon-name != IconName.none: AtlasIcon { x: 8px; y: (parent.height - 12px) / 2; size: 12px; name: root.icon-name; icon-color: #636c73; }
+    Text {
+        x: root.icon-name == IconName.none ? 8px : 28px;
+        width: parent.width - self.x - 8px;
+        text: root.text == "" ? root.placeholder : root.text;
+        color: root.text == "" ? #5e666d : #b8bdc1;
+        font-family: root.mono ? AtlasTypography.font-mono : AtlasTypography.font-sans;
+        font-size: 10px; vertical-alignment: center; overflow: elide;
+    }
+}
+
+export component GroupTitle inherits Rectangle {
+    in property <string> text;
+    in property <string> count;
+    in-out property <bool> collapsed: false;
+    callback toggled(bool);
+    height: 27px;
+    background: group-pointer.pressed ? #292d30 : group-pointer.has-hover ? #22262a : #191c1f;
+    animate background { duration: 110ms; }
+    accessible-role: AccessibleRole.button;
+    accessible-label: (root.collapsed ? "Expand " : "Collapse ") + root.text;
+    accessible-action-default => {
+        root.collapsed = !root.collapsed;
+        root.toggled(root.collapsed);
+    }
+    AtlasIcon { x: 7px; y: 8px; size: 11px; name: root.collapsed ? IconName.chevron-right : IconName.chevron-down; icon-color: #747c83; }
+    Text { x: 21px; width: parent.width - 55px; text: root.text; color: #aab0b6; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; letter-spacing: 0.7px; vertical-alignment: center; }
+    Text { width: parent.width - 9px; text: root.count; color: #717981; font-family: AtlasTypography.font-sans; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+    group-pointer := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        clicked => {
+            root.collapsed = !root.collapsed;
+            root.toggled(root.collapsed);
+        }
+    }
+}

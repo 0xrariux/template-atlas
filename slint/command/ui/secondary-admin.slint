@@ -1,0 +1,281 @@
+import { AtlasTypography, AtlasIcon, AtlasStatusIndicator, BadgeTone, IconName, AtlasShape } from "@atlas-ui/stable.slint";
+import { CommandTheme } from "theme.slint";
+import { LogRecord, TeamRecord, IntegrationRecord } from "models.slint";
+import {
+    CommandSurface, CommandButton, SecondaryHeader, FieldBox, CommandSearchField, MiniAction,
+    CommandBadge, CommandProgressRail, CommandToggle
+} from "components.slint";
+
+export component LogsPage inherits Rectangle {
+    in property <[LogRecord]> logs;
+    private property <bool> paused: false;
+    private property <string> log-query: "service:indexer level:error duration:>100ms";
+    height: 780px; background: #00000000;
+    SecondaryHeader { x: 0px; y: 0px; width: parent.width; index: "06"; eyebrow: "OBSERVABILITY STREAM"; title: "Logs"; subtitle: "Query live application and infrastructure events."; primary-label: ""; }
+    CommandSurface { x: 0px; y: 123px; width: parent.width; height: 97px;
+        Rectangle { x: 10px; y: 10px; width: parent.width - 20px; height: 38px; border-width: 1px; border-color: #cfd4da; border-radius: 5px; background: #ffffff;
+            AtlasIcon { x: 9px; y: 12px; size: 14px; name: IconName.search; icon-color: #89909a; }
+            TextInput { x: 35px; y: 1px; width: parent.width - 138px; height: parent.height - 2px; text <=> root.log-query; single-line: true; color: #59616c; selection-foreground-color: #ffffff; selection-background-color: CommandTheme.accent; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; accessible-label: "Log query"; }
+            Text { x: parent.width - 95px; width: 35px; text: "⌘ ↵"; color: #989da6; font-family: AtlasTypography.font-sans; font-size: 7px; vertical-alignment: center; }
+            CommandButton { x: parent.width - 68px; y: -1px; width: 69px; height: 40px; text: "Run Query"; primary: true; border-radius: 5px; }
+        }
+        MiniAction { x: 10px; y: 57px; width: 81px; height: 30px; text: "All services  ⌄"; }
+        MiniAction { x: 98px; y: 57px; width: 68px; height: 30px; text: "All levels  ⌄"; }
+        MiniAction { x: 173px; y: 57px; width: 84px; height: 30px; text: "Last 30 minutes  ⌄"; }
+        AtlasStatusIndicator { x: parent.width - 127px; y: 70px; width: 5px; height: 5px; label: root.paused ? "Log stream paused" : "Log stream live"; tone: root.paused ? BadgeTone.warning : BadgeTone.healthy; indicator-color: root.paused ? CommandTheme.warning : CommandTheme.success; }
+        Text { x: parent.width - 116px; y: 64px; text: root.paused ? "PAUSED" : "LIVE · 128 EVENTS/S"; color: root.paused ? CommandTheme.warning : CommandTheme.success; font-family: AtlasTypography.font-mono; font-size: 6px; }
+        MiniAction { x: parent.width - 41px; y: 57px; width: 31px; height: 30px; text: root.paused ? "▶" : "Ⅱ"; clicked => { root.paused = !root.paused; } }
+    }
+
+    CommandSurface { x: 0px; y: 232px; width: parent.width; height: 342px; border-color: #2e3339; background: CommandTheme.dark-surface;
+        Rectangle { x: 1px; y: 1px; width: parent.width - 2px; height: 30px; background: #20242a;
+            Text { x: 12px; width: 100px; text: "TIME"; color: #727b86; font-family: AtlasTypography.font-mono; font-size: 6px; letter-spacing: 0.6px; vertical-alignment: center; }
+            Text { x: 112px; width: 125px; text: "SERVICE"; color: #727b86; font-family: AtlasTypography.font-mono; font-size: 6px; letter-spacing: 0.6px; vertical-alignment: center; }
+            Text { x: 237px; width: 60px; text: "LEVEL"; color: #727b86; font-family: AtlasTypography.font-mono; font-size: 6px; letter-spacing: 0.6px; vertical-alignment: center; }
+            Text { x: 297px; width: 170px; text: "EVENT"; color: #727b86; font-family: AtlasTypography.font-mono; font-size: 6px; letter-spacing: 0.6px; vertical-alignment: center; }
+            Text { x: 467px; text: "ATTRIBUTES"; color: #727b86; font-family: AtlasTypography.font-mono; font-size: 6px; letter-spacing: 0.6px; vertical-alignment: center; }
+        }
+        VerticalLayout { x: 1px; y: 31px; width: parent.width - 2px; height: 280px; spacing: 0px;
+            for row[index] in root.logs: Rectangle {
+                height: 40px; background: log-row.has-hover ? #1c2126 : CommandTheme.dark-surface;
+                animate background { duration: 100ms; }
+                if index < root.logs.length - 1: Rectangle { y: 39px; width: parent.width; height: 1px; background: #272b30; }
+                Text { x: 12px; width: 100px; text: row.time; color: #65707b; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; }
+                Text { x: 112px; width: 125px; text: row.service; color: #c8ccd2; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; }
+                Text { x: 237px; width: 60px; text: row.level; color: row.tone == 1 ? #e0a04a : row.tone == 2 ? #e16a6a : row.tone == 3 ? #7f8da0 : #58af82; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; }
+                Text { x: 297px; width: 170px; text: row.event; color: #c8ccd2; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; overflow: elide; }
+                Text { x: 467px; width: parent.width - 479px; text: row.attributes; color: #79838d; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; overflow: elide; }
+                log-row := TouchArea { mouse-cursor: MouseCursor.pointer; }
+            }
+        }
+        Rectangle { x: 1px; y: 311px; width: parent.width - 2px; height: 30px; background: #20242a;
+            AtlasStatusIndicator { x: 12px; y: 13px; width: 5px; height: 5px; label: "Streaming from six services"; tone: BadgeTone.healthy; indicator-color: CommandTheme.success; }
+            Text { x: 24px; text: "Streaming from 6 services"; color: #737d87; font-family: AtlasTypography.font-sans; font-size: 6px; vertical-alignment: center; }
+            Text { x: 145px; text: "7 of 12,482 events"; color: #737d87; font-family: AtlasTypography.font-sans; font-size: 6px; vertical-alignment: center; }
+            Text { x: 0px; width: parent.width - 15px; text: "Load more"; color: #8793ff; font-family: AtlasTypography.font-sans; font-size: 6px; horizontal-alignment: right; vertical-alignment: center; }
+        }
+    }
+
+    CommandSurface { x: 0px; y: 586px; width: parent.width; height: 157px;
+        Text { x: 15px; y: 15px; text: "SAVED QUERIES"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.7px; }
+        Text { x: 0px; y: 15px; width: parent.width - 18px; text: "+  Save current query"; color: CommandTheme.accent; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; }
+        for query[index] in ["Indexer failures", "Slow API requests"]: Rectangle {
+            x: 15px; y: 48px + index * 47px; width: parent.width - 30px; height: 47px;
+            background: query-action.has-hover ? #f7f8ff : #00000000;
+            animate background { duration: 100ms; }
+            if index == 0: Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: #edf0f2; }
+            AtlasIcon { x: 8px; y: 17px; size: 14px; name: IconName.logs; icon-color: #6977e9; }
+            Text { x: 33px; y: 11px; text: query; color: #555c66; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; }
+            Text { x: 33px; y: 27px; text: index == 0 ? "service:indexer level:error" : "duration:>500ms service:api-gateway"; color: #9a9fa7; font-family: AtlasTypography.font-mono; font-size: 6px; }
+            Text { x: 0px; width: parent.width - 25px; text: index == 0 ? "Used 12m ago" : "Used yesterday"; color: #9a9fa7; font-family: AtlasTypography.font-sans; font-size: 6px; horizontal-alignment: right; vertical-alignment: center; }
+            AtlasIcon { x: parent.width - 13px; y: 18px; size: 10px; name: IconName.chevron-right; icon-color: #9a9fa7; }
+            query-action := TouchArea { mouse-cursor: MouseCursor.pointer; }
+        }
+    }
+}
+
+component TeamStat inherits Rectangle {
+    in property <string> label; in property <string> value; in property <string> meta; in property <color> value-color: CommandTheme.text;
+    Text { x: 17px; y: 14px; text: root.label; color: #858b95; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.7px; }
+    Text { x: 17px; y: 35px; text: root.value; color: root.value-color; font-family: AtlasTypography.font-display; font-size: 21px; font-weight: 700; }
+    Text { x: 17px; y: 64px; text: root.meta; color: #9ba0a8; font-family: AtlasTypography.font-sans; font-size: 7px; }
+}
+
+export component TeamPage inherits Rectangle {
+    in property <[TeamRecord]> team;
+    private property <string> member-search;
+    height: 790px; background: #00000000;
+    SecondaryHeader { x: 0px; y: 0px; width: parent.width; index: "07"; eyebrow: "ACCESS DIRECTORY"; title: "Team"; subtitle: "Manage members, roles, and workspace access."; primary-label: "Invite Member"; primary-icon: IconName.users; }
+    CommandSurface { x: 0px; y: 123px; width: parent.width; height: 93px;
+        HorizontalLayout { x: 0px; y: 0px; width: parent.width; height: parent.height; spacing: 0px;
+            TeamStat { horizontal-stretch: 1; label: "MEMBERS"; value: "24"; meta: "Across 6 teams"; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            TeamStat { horizontal-stretch: 1; label: "ADMINISTRATORS"; value: "3"; meta: "Full workspace access"; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            TeamStat { horizontal-stretch: 1; label: "PENDING INVITES"; value: "2"; meta: "Expire in 5 days"; }
+            Rectangle { width: 1px; background: CommandTheme.border; }
+            TeamStat { horizontal-stretch: 1; label: "ACTIVE NOW"; value: "8"; meta: "Last 15 minutes"; value-color: CommandTheme.success; }
+        }
+    }
+    CommandSurface { x: 0px; y: 228px; width: parent.width; height: 347px;
+        Rectangle { x: 1px; y: 1px; width: parent.width - 2px; height: 53px;
+            CommandSearchField { x: 11px; y: 11px; width: 250px; placeholder-text: "Search members..."; value <=> root.member-search; }
+            MiniAction { x: parent.width - 164px; y: 11px; width: 74px; text: "Role & team"; show-icon: true; icon-name: IconName.filter; }
+            MiniAction { x: parent.width - 82px; y: 11px; width: 71px; text: "Export CSV"; show-icon: true; icon-name: IconName.download; }
+            Rectangle { y: 53px; width: parent.width; height: 1px; background: CommandTheme.border; }
+        }
+        Rectangle { x: 1px; y: 54px; width: parent.width - 2px; height: 31px; background: #f7f8f9;
+            for label[index] in ["MEMBER", "ROLE", "TEAM", "STATUS", "LAST ACTIVE"]: Text {
+                x: index == 0 ? 13px : index == 1 ? parent.width * 0.31 : index == 2 ? parent.width * 0.48 : index == 3 ? parent.width * 0.66 : parent.width * 0.82;
+                text: label; color: #8d939c; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.6px; vertical-alignment: center;
+            }
+        }
+        VerticalLayout { x: 1px; y: 85px; width: parent.width - 2px; height: 260px; spacing: 0px;
+            for member[index] in root.team: Rectangle {
+                height: 52px; background: member-action.has-hover ? #f7f8ff : #ffffff;
+                animate background { duration: 100ms; }
+                if index < root.team.length - 1: Rectangle { y: 51px; width: parent.width; height: 1px; background: #edf0f2; }
+                Rectangle { x: 13px; y: 12px; width: 28px; height: 28px; border-radius: AtlasShape.radius-round; background: #272b31;
+                    Text { text: member.initials; color: #ffffff; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: center; vertical-alignment: center; }
+                }
+                Text { x: 50px; y: 10px; width: parent.width * 0.25; text: member.name; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; overflow: elide; }
+                Text { x: 50px; y: 27px; width: parent.width * 0.25; text: member.email; color: #999ea6; font-family: AtlasTypography.font-sans; font-size: 6px; overflow: elide; }
+                Rectangle { x: parent.width * 0.31; y: 18px; width: 65px; height: 17px; border-radius: 3px; background: #f0f1f3;
+                    Text { text: member.role; color: #5f6670; font-family: AtlasTypography.font-sans; font-size: 6px; horizontal-alignment: center; vertical-alignment: center; }
+                }
+                Text { x: parent.width * 0.48; width: parent.width * 0.15; text: member.team; color: #616873; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                CommandBadge { x: parent.width * 0.66; y: 16px; width: 70px; text: member.status; status-tone: member.tone; }
+                Text { x: parent.width * 0.82; width: parent.width * 0.12; text: member.last; color: #616873; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                AtlasIcon { x: parent.width - 27px; y: 20px; size: 13px; name: IconName.menu; icon-color: #8f959e; }
+                member-action := TouchArea { mouse-cursor: MouseCursor.pointer; }
+            }
+        }
+    }
+    CommandSurface { x: 0px; y: 587px; width: (parent.width - 12px) / 2; height: 191px;
+        Text { x: 16px; y: 16px; text: "ROLE DISTRIBUTION"; color: #717883; font-family: AtlasTypography.font-sans; font-size: 10px; }
+        Text { x: 16px; y: 36px; text: "Workspace access"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 12px; font-weight: 700; }
+        AtlasIcon { x: parent.width - 35px; y: 18px; size: 16px; name: IconName.users; icon-color: CommandTheme.accent; }
+        VerticalLayout { x: 16px; y: 71px; width: parent.width - 32px; height: 104px; spacing: 0px;
+            for label[index] in ["Operators", "Analysts", "Administrators", "Viewers"]: Rectangle {
+                height: 26px;
+                Text { x: 0px; width: 85px; text: label; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; vertical-alignment: center; }
+                CommandProgressRail { x: 93px; y: 12px; width: parent.width - 118px; value: index == 0 ? 54 : index == 1 ? 25 : index == 2 ? 13 : 8; progress-label: label + " role share"; }
+                Text { x: parent.width - 19px; width: 19px; text: index == 0 ? "13" : index == 1 ? "6" : index == 2 ? "3" : "2"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; vertical-alignment: center; horizontal-alignment: right; }
+            }
+        }
+    }
+    CommandSurface { x: (parent.width - 12px) / 2 + 12px; y: 587px; width: (parent.width - 12px) / 2; height: 191px; background: CommandTheme.dark-surface; border-color: CommandTheme.dark-surface;
+        AtlasIcon { x: 22px; y: 75px; size: 35px; name: IconName.lock; icon-color: #8290ff; }
+        Text { x: 70px; y: 60px; text: "IDENTITY PROVIDER"; color: #707987; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.7px; }
+        Text { x: 70px; y: 80px; text: "Single sign-on enabled"; color: #ffffff; font-family: AtlasTypography.font-sans; font-size: 12px; font-weight: 700; }
+        Text { x: 70px; y: 106px; text: "All members authenticate through Okta SAML."; color: #8f98a4; font-family: AtlasTypography.font-sans; font-size: 8px; }
+        Text { x: 70px; y: 132px; text: "Manage SSO   ›"; color: #8996ff; font-family: AtlasTypography.font-sans; font-size: 7px; }
+    }
+}
+
+export component IntegrationsPage inherits Rectangle {
+    in property <[IntegrationRecord]> integrations;
+    private property <string> integration-search;
+    height: 760px; background: #00000000;
+    SecondaryHeader { x: 0px; y: 0px; width: parent.width; index: "08"; eyebrow: "CONNECTED SYSTEMS"; title: "Integrations"; subtitle: "Extend Atlas Command across your operations stack."; primary-label: "Add Integration"; primary-icon: IconName.add; }
+    CommandSurface { x: 0px; y: 123px; width: parent.width; height: 88px; background: CommandTheme.dark-surface; border-color: CommandTheme.dark-surface;
+        Rectangle { x: 17px; y: 20px; width: 38px; height: 38px; border-width: 1px; border-color: #39404a; background: #00000000;
+            AtlasIcon { x: 10px; y: 10px; size: 18px; name: IconName.webhook; icon-color: #7d8cff; }
+        }
+        Text { x: 68px; y: 18px; text: "INTEGRATION HEALTH"; color: #747d89; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.7px; }
+        Text { x: 68px; y: 35px; text: "All connected systems are operational."; color: #ffffff; font-family: AtlasTypography.font-sans; font-size: 12px; font-weight: 700; }
+        Text { x: 68px; y: 55px; text: "3 integrations processed 18,294 events in the last 24 hours."; color: #9199a4; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Text { x: 0px; y: 37px; width: parent.width - 23px; text: "View delivery logs   ›"; color: #8995ff; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; }
+    }
+    CommandSurface { x: 0px; y: 223px; width: parent.width; height: 486px;
+        Text { x: 17px; y: 17px; text: "INSTALLED & AVAILABLE"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.7px; }
+        Text { x: 17px; y: 36px; text: "Integration catalog"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 700; }
+        CommandSearchField { x: parent.width - 247px; y: 17px; width: 230px; placeholder-text: "Search integrations"; value <=> root.integration-search; }
+        Rectangle { x: 17px; y: 70px; width: parent.width - 34px; height: 398px;
+            for item[index] in root.integrations: CommandSurface {
+                x: Math.mod(index, 3) * (parent.width + 9px) / 3; y: index < 3 ? 0px : 202px;
+                width: (parent.width - 18px) / 3; height: 193px; border-radius: 7px;
+                background: integration-action.has-hover ? #fafbff : #ffffff;
+                border-color: integration-action.has-hover ? #aeb8ff : CommandTheme.border;
+                animate background { duration: 120ms; }
+                animate border-color { duration: 120ms; }
+                Rectangle { x: 15px; y: 15px; width: 34px; height: 34px; border-radius: 6px; background: item.icon == 0 ? #20242a : item.icon == 1 || item.icon == 2 ? #6754b4 : item.icon == 3 ? #2d8d62 : item.icon == 4 ? #d08225 : CommandTheme.accent;
+                    AtlasIcon { x: 9px; y: 9px; size: 16px; name: item.icon == 0 ? IconName.logs : item.icon == 1 ? IconName.bell : item.icon == 2 ? IconName.activity : item.icon == 3 ? IconName.warning : item.icon == 4 ? IconName.cloud : IconName.webhook; icon-color: #ffffff; }
+                }
+                AtlasStatusIndicator { x: parent.width - 55px; y: 28px; width: 5px; height: 5px; label: item.name + " " + item.status; tone: item.tone == 0 ? BadgeTone.healthy : BadgeTone.neutral; indicator-color: item.tone == 0 ? CommandTheme.success : #a3a8b0; }
+                Text { x: 0px; y: 22px; width: parent.width - 15px; text: item.status; color: item.tone == 0 ? CommandTheme.success : #8b929b; font-family: AtlasTypography.font-sans; font-size: 6px; horizontal-alignment: right; }
+                Text { x: 15px; y: 65px; text: item.name; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 700; }
+                Text { x: 15px; y: 86px; text: item.category; color: #999ea6; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.65px; }
+                Text { x: 15px; y: 109px; width: parent.width - 30px; text: item.description; color: #747b84; font-family: AtlasTypography.font-sans; font-size: 8px; wrap: word-wrap; }
+                Rectangle { x: 15px; y: 151px; width: parent.width - 30px; height: 1px; background: #edf0f2; }
+                Rectangle {
+                    x: 15px; y: 159px; width: 82px; height: 25px; border-radius: 4px;
+                    border-width: 1px; border-color: integration-action.has-hover ? CommandTheme.accent : #cfd5ff;
+                    background: integration-action.pressed ? #e3e7ff : integration-action.has-hover ? #eef0ff : #ffffff;
+                    Text { x: 9px; width: parent.width - 18px; text: item.tone == 0 ? "Manage  ›" : "Connect  ›"; color: CommandTheme.accent; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 650; vertical-alignment: center; }
+                }
+                integration-action := TouchArea { mouse-cursor: MouseCursor.pointer; }
+            }
+        }
+    }
+}
+
+component SettingRow inherits Rectangle {
+    in property <string> label;
+    in property <string> detail;
+    Text { x: 0px; y: 10px; width: parent.width - 310px; text: root.label; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; horizontal-alignment: left; }
+    Text { x: 0px; y: 28px; width: parent.width - 310px; text: root.detail; color: #9398a1; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: left; }
+}
+
+export component SettingsPage inherits Rectangle {
+    private property <int> section: 0;
+    private property <bool> maintenance: false;
+    private property <bool> approval: true;
+    height: 760px; background: #00000000;
+    SecondaryHeader { x: 0px; y: 0px; width: parent.width; index: "09"; eyebrow: "WORKSPACE CONTROL"; title: "Settings"; subtitle: "Configure governance, reporting, and platform behavior."; primary-label: ""; }
+    CommandSurface { x: 0px; y: 123px; width: parent.width; height: 568px;
+        Rectangle { x: 0px; y: 0px; width: 230px; height: parent.height; background: #f8f9fa;
+            Text { x: 10px; y: 17px; text: "COMMAND SETTINGS"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.75px; }
+            for label[index] in ["General", "Notifications", "Security", "API & Webhooks", "Data retention"]: Rectangle {
+                x: 10px; y: 36px + index * 36px; width: parent.width - 20px; height: 36px; border-radius: 4px;
+                background: root.section == index ? #ffffff : action.has-hover ? #f0f2f5 : #00000000;
+                animate background { duration: 110ms; }
+                if root.section == index: Rectangle { x: 0px; y: 7px; width: 3px; height: 22px; border-radius: 2px; background: CommandTheme.accent; }
+                Text { x: 12px; width: parent.width - 38px; text: label; color: root.section == index ? CommandTheme.text : #68707a; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: root.section == index ? 650 : 400; vertical-alignment: center; }
+                AtlasIcon { x: parent.width - 22px; y: 13px; size: 10px; name: IconName.chevron-right; icon-color: #7a828d; }
+                action := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.section = index; } }
+            }
+            Rectangle { x: 17px; y: parent.height - 110px; width: parent.width - 34px; height: 46px; border-width: 1px; border-color: #dfe6e2; background: #f3f8f5;
+                AtlasIcon { x: 12px; y: 14px; size: 16px; name: IconName.shield; icon-color: CommandTheme.success; }
+                Text { x: 39px; y: 10px; text: "Demo policy active"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; }
+                Text { x: 39px; y: 25px; text: "Sample control policy"; color: #8b948e; font-family: AtlasTypography.font-sans; font-size: 6px; }
+            }
+        }
+        Rectangle { x: 230px; width: 1px; height: parent.height; background: CommandTheme.border; }
+        Rectangle { x: 231px; width: parent.width - 231px; height: parent.height; background: #ffffff;
+            Text { x: 27px; y: 21px; text: root.section == 0 ? "General" : root.section == 1 ? "Notifications" : root.section == 2 ? "Security" : root.section == 3 ? "API & Webhooks" : "Data retention"; color: CommandTheme.text; font-family: AtlasTypography.font-display; font-size: 17px; font-weight: 700; }
+            Text { x: 27px; y: 48px; text: "Manage " + (root.section == 0 ? "general" : root.section == 1 ? "notifications" : root.section == 2 ? "security" : root.section == 3 ? "api & webhooks" : "data retention") + " preferences for this workspace."; color: #858b95; font-family: AtlasTypography.font-sans; font-size: 8px; }
+            Rectangle { x: 27px; y: 74px; width: parent.width - 54px; height: 1px; background: CommandTheme.border; }
+
+            if root.section == 0: Rectangle {
+                x: 27px; y: 91px; width: parent.width - 54px; height: 390px;
+                Text { x: 0px; y: 0px; text: "WORKSPACE DETAILS"; color: #969ba4; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; letter-spacing: 0.65px; }
+                SettingRow { x: 0px; y: 23px; width: parent.width; height: 59px; label: "Workspace name"; detail: "Shown across Atlas Command.";
+                    FieldBox { x: parent.width - 260px; y: 6px; width: 260px; height: 34px; text: "Example Production"; show-icon: false; }
+                }
+                SettingRow { x: 0px; y: 82px; width: parent.width; height: 59px; label: "Workspace identifier"; detail: "Used in API requests and audit events.";
+                    FieldBox { x: parent.width - 260px; y: 6px; width: 260px; height: 34px; text: "example-production"; show-icon: false; disabled: true; }
+                }
+                SettingRow { x: 0px; y: 141px; width: parent.width; height: 59px; label: "Default timezone"; detail: "Controls dates in reports and exports.";
+                    FieldBox { x: parent.width - 260px; y: 6px; width: 260px; height: 34px; text: "UTC — Coordinated Universal Time      ⌄"; show-icon: false; }
+                }
+                Rectangle { x: 0px; y: 207px; width: parent.width; height: 1px; background: CommandTheme.border; }
+                Text { x: 0px; y: 224px; text: "OPERATING MODE"; color: #969ba4; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; letter-spacing: 0.65px; }
+                SettingRow { x: 0px; y: 247px; width: parent.width; height: 59px; label: "Maintenance mode"; detail: "Prevent non-administrators from making changes.";
+                    CommandToggle { x: parent.width - 44px; y: 8px; checked <=> root.maintenance; accessible-name: "Maintenance mode"; }
+                }
+                Rectangle { x: 0px; y: 313px; width: parent.width; height: 1px; background: CommandTheme.border; }
+                Text { x: 0px; y: 330px; text: "DANGER ZONE"; color: #c46565; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; letter-spacing: 0.65px; }
+                SettingRow { x: 0px; y: 351px; width: parent.width; height: 59px; label: "Delete workspace"; detail: "Permanently remove this workspace and its history.";
+                    MiniAction { x: parent.width - 100px; y: 7px; width: 100px; height: 32px; text: "Delete workspace"; show-icon: true; icon-name: IconName.trash; border-color: #deb9b9; background: #fff6f6; }
+                }
+            }
+            if root.section != 0: Rectangle {
+                x: 27px; y: 91px; width: parent.width - 54px; height: 260px;
+                Text { text: root.section == 1 ? "NOTIFICATIONS POLICY" : root.section == 2 ? "SECURITY POLICY" : root.section == 3 ? "API & WEBHOOKS POLICY" : "DATA RETENTION POLICY"; color: #969ba4; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; letter-spacing: 0.65px; }
+                SettingRow { x: 0px; y: 28px; width: parent.width; height: 59px; label: "Enable recommended policy"; detail: "Apply the recommended Atlas configuration.";
+                    CommandToggle { x: parent.width - 44px; y: 8px; checked: true; accessible-name: "Enable recommended policy"; }
+                }
+                SettingRow { x: 0px; y: 87px; width: parent.width; height: 59px; label: "Require administrator approval"; detail: "Changes must be reviewed before activation.";
+                    CommandToggle { x: parent.width - 44px; y: 8px; checked <=> root.approval; accessible-name: "Require administrator approval"; }
+                }
+                SettingRow { x: 0px; y: 146px; width: parent.width; height: 59px; label: "Default destination"; detail: "Primary configuration target.";
+                    FieldBox { x: parent.width - 260px; y: 6px; width: 260px; height: 34px; text: "Example workspace      ⌄"; show-icon: false; }
+                }
+            }
+            Rectangle { x: 27px; y: parent.height - 73px; width: parent.width - 54px; height: 1px; background: CommandTheme.border; }
+            Text { x: 27px; y: parent.height - 42px; text: "Last changed by Demo Administrator · 2 days ago"; color: #9b9fa7; font-family: AtlasTypography.font-sans; font-size: 7px; }
+            CommandButton { x: parent.width - 108px; y: parent.height - 55px; width: 81px; height: 33px; text: "Save Changes"; primary: true; }
+        }
+    }
+}

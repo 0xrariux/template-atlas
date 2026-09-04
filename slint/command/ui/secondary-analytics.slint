@@ -1,0 +1,122 @@
+import { AtlasTypography, AtlasIcon, IconName } from "@atlas-ui/stable.slint";
+import { CommandTheme } from "theme.slint";
+import { RegionRecord } from "models.slint";
+import {
+    CommandSurface, SecondaryHeader, MainOperationsChart,
+    CommandProgressRail, TrendLine
+} from "components.slint";
+
+component AnalyticsKpi inherits CommandSurface {
+    in property <string> label;
+    in property <string> value;
+    in property <string> change;
+    in property <int> variant: 0;
+    Text { x: 17px; y: 14px; width: parent.width - 34px; text: root.label; color: #858b95; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.7px; horizontal-alignment: left; }
+    Text { x: 17px; y: 33px; width: parent.width - 34px; text: root.value; color: CommandTheme.text; font-family: AtlasTypography.font-display; font-size: 21px; font-weight: 700; letter-spacing: -0.7px; horizontal-alignment: left; }
+    Text { x: 91px; y: 39px; width: 58px; text: root.change; color: root.variant == 2 ? #4d7b68 : CommandTheme.success; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: left; }
+    TrendLine { x: 17px; y: 68px; width: parent.width - 34px; height: 23px; variant: root.variant == 2 ? 2 : root.variant; line-color: root.variant == 1 ? CommandTheme.success : root.variant == 2 ? CommandTheme.warning : root.variant == 3 ? #68707c : CommandTheme.accent; }
+}
+
+component RegionRow inherits Rectangle {
+    in property <RegionRecord> region;
+    height: 56px; background: #00000000;
+    Rectangle { y: 0px; width: parent.width; height: 1px; background: #edf0f2; }
+    Text { x: 0px; y: 10px; width: 115px; text: root.region.name; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; horizontal-alignment: left; }
+    Text { x: 0px; y: 25px; width: 115px; text: root.region.code; color: #a1a5ad; font-family: AtlasTypography.font-mono; font-size: 6px; horizontal-alignment: left; }
+    Text { x: parent.width - 96px; y: 10px; width: 50px; text: root.region.value; color: #4e555f; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; }
+    Text { x: parent.width - 39px; y: 10px; width: 39px; text: root.region.latency; color: #8b919a; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; }
+    CommandProgressRail { x: 0px; y: 43px; width: parent.width; value: root.region.share * 100; progress-label: root.region.name + " traffic share"; }
+}
+
+export component AnalyticsPage inherits Rectangle {
+    in property <[RegionRecord]> regions;
+    private property <int> range: 1;
+    height: 900px; background: #00000000;
+
+    SecondaryHeader {
+        x: 0px; y: 0px; width: parent.width; index: "02"; eyebrow: "PERFORMANCE INTELLIGENCE";
+        title: "Analytics"; subtitle: "Understand demand, reliability, and resource consumption.";
+        primary-label: "";
+    }
+
+    HorizontalLayout {
+        x: 0px; y: 123px; width: parent.width; height: 106px; spacing: 0px;
+        AnalyticsKpi { horizontal-stretch: 1; label: "TOTAL REQUESTS"; value: "17.42M"; change: "+14.2%"; variant: 0; border-radius: 8px; }
+        AnalyticsKpi { horizontal-stretch: 1; label: "UNIQUE USERS"; value: "84,219"; change: "+8.7%"; variant: 1; border-radius: 0px; }
+        AnalyticsKpi { horizontal-stretch: 1; label: "P95 LATENCY"; value: "82 ms"; change: "−6 ms"; variant: 2; border-radius: 0px; }
+        AnalyticsKpi { horizontal-stretch: 1; label: "COMPUTE COST"; value: "$42.8K"; change: "+3.1%"; variant: 3; border-radius: 8px; }
+    }
+
+    chart := CommandSurface {
+        x: 0px; y: 241px; width: parent.width - 297px; height: 355px;
+        Text { x: 18px; y: 17px; width: 180px; text: "REQUEST THROUGHPUT"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.75px; horizontal-alignment: left; }
+        Text { x: 18px; y: 34px; width: 210px; text: "Traffic and reliability"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 700; horizontal-alignment: left; }
+        Rectangle {
+            x: parent.width - 133px; y: 18px; width: 114px; height: 30px; background: #f1f2f4; border-radius: 5px;
+            HorizontalLayout { padding: 2px; spacing: 0px;
+                for label[index] in ["24H", "7D", "30D", "90D"]: Rectangle {
+                    horizontal-stretch: 1; border-radius: 4px; background: root.range == index ? #ffffff : #00000000;
+                    Text { text: label; color: root.range == index ? #25292f : #898f98; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: center; vertical-alignment: center; }
+                    TouchArea { clicked => { root.range = index; } }
+                }
+            }
+        }
+        Rectangle { x: 57px; y: 80px; width: 10px; height: 2px; background: CommandTheme.accent; }
+        Text { x: 73px; y: 73px; text: "Requests"; color: #7b818b; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Rectangle { x: 122px; y: 80px; width: 10px; height: 2px; background: CommandTheme.success; }
+        Text { x: 138px; y: 73px; text: "Successful"; color: #7b818b; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Rectangle { x: 207px; y: 80px; width: 10px; height: 2px; background: CommandTheme.danger; }
+        Text { x: 223px; y: 73px; text: "Errors"; color: #7b818b; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Text { x: 0px; y: 73px; width: parent.width - 18px; text: "Peak 128.4K / hr"; color: #59616b; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; }
+        Rectangle { x: 12px; y: 96px; width: 35px; height: 220px;
+            for label[index] in ["140K", "105K", "70K", "35K", "0"]: Text { y: index * (parent.height - 10px) / 4; width: parent.width; height: 10px; text: label; color: #8e949d; font-family: AtlasTypography.font-sans; font-size: 7px; horizontal-alignment: right; vertical-alignment: center; }
+        }
+        MainOperationsChart { x: 58px; y: 100px; width: parent.width - 76px; height: 220px; analytics: true; }
+        HorizontalLayout { x: 58px; y: 326px; width: parent.width - 76px; height: 10px;
+            for label[index] in ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]: Text { text: label; color: #9fa4ac; font-family: AtlasTypography.font-sans; font-size: 6px; horizontal-alignment: index == 0 ? left : index == 6 ? right : center; }
+        }
+    }
+
+    CommandSurface {
+        x: chart.width + 12px; y: 241px; width: parent.width - self.x; height: 355px;
+        Text { x: 17px; y: 17px; width: 150px; text: "TRAFFIC BY REGION"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.75px; horizontal-alignment: left; }
+        AtlasIcon { x: parent.width - 34px; y: 17px; size: 16px; name: IconName.globe; icon-color: CommandTheme.accent; }
+        VerticalLayout { x: 17px; y: 50px; width: parent.width - 34px; height: 224px; spacing: 0px;
+            for region in root.regions: RegionRow { region: region; }
+        }
+        Rectangle { x: 17px; y: 292px; width: parent.width - 34px; height: 1px; background: CommandTheme.border; }
+        Text { x: 17px; y: 307px; text: "GLOBAL EDGE COVERAGE"; color: #9298a1; font-family: AtlasTypography.font-sans; font-size: 7px; }
+        Text { x: 0px; y: 307px; width: parent.width - 17px; text: "18 / 18"; color: CommandTheme.success; font-family: AtlasTypography.font-sans; font-size: 8px; font-weight: 700; horizontal-alignment: right; }
+    }
+
+    CommandSurface {
+        x: 0px; y: 608px; width: parent.width; height: 246px;
+        Text { x: 18px; y: 17px; text: "TOP ENDPOINTS"; color: #979ca5; font-family: AtlasTypography.font-sans; font-size: 7px; font-weight: 700; letter-spacing: 0.75px; }
+        Text { x: 18px; y: 35px; text: "API performance"; color: CommandTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 700; }
+        Text { x: 0px; y: 31px; width: parent.width - 29px; text: "View endpoint analytics   ›"; color: CommandTheme.accent; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; }
+        Rectangle { x: 1px; y: 71px; width: parent.width - 2px; height: 30px; background: #f7f8f9;
+            Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: CommandTheme.border; }
+            Text { x: 14px; width: parent.width * 0.4; text: "ENDPOINT"; color: #8d939c; font-family: AtlasTypography.font-sans; font-size: 6px; letter-spacing: 0.65px; vertical-alignment: center; }
+            Text { x: parent.width * 0.42; text: "REQUESTS"; color: #8d939c; font-family: AtlasTypography.font-sans; font-size: 6px; vertical-alignment: center; }
+            Text { x: parent.width * 0.58; text: "P95 LATENCY"; color: #8d939c; font-family: AtlasTypography.font-sans; font-size: 6px; vertical-alignment: center; }
+            Text { x: parent.width * 0.73; text: "ERROR RATE"; color: #8d939c; font-family: AtlasTypography.font-sans; font-size: 6px; vertical-alignment: center; }
+            Text { x: parent.width * 0.88; text: "TREND"; color: #8d939c; font-family: AtlasTypography.font-sans; font-size: 6px; vertical-alignment: center; }
+        }
+        VerticalLayout { x: 1px; y: 101px; width: parent.width - 2px; height: 144px; spacing: 0px;
+            for row[index] in ["/v1/events/ingest", "/v1/users/session", "/v1/search/query"]: Rectangle {
+                height: 48px; background: endpoint-action.has-hover ? #f7f8ff : #ffffff;
+                animate background { duration: 100ms; }
+                if index < 2: Rectangle { y: 47px; width: parent.width; height: 1px; background: #edf0f2; }
+                Rectangle { x: 14px; y: 15px; width: 25px; height: 18px; border-radius: 3px; background: #edf0ff;
+                    Text { text: index == 1 ? "GET" : "POST"; color: CommandTheme.accent; font-family: AtlasTypography.font-sans; font-size: 6px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                }
+                Text { x: 48px; width: parent.width * 0.35; text: row; color: #3b4047; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.42; text: index == 0 ? "684.2K" : index == 1 ? "441.7K" : "329.4K"; color: #565d67; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.58; text: index == 0 ? "82 ms" : index == 1 ? "49 ms" : "126 ms"; color: #565d67; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                Text { x: parent.width * 0.73; text: index == 0 ? "0.08%" : index == 1 ? "0.12%" : "0.41%"; color: #565d67; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                TrendLine { x: parent.width * 0.86; y: 12px; width: parent.width * 0.09; height: 22px; variant: index; }
+                endpoint-action := TouchArea { mouse-cursor: MouseCursor.pointer; }
+            }
+        }
+    }
+}

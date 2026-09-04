@@ -1,0 +1,388 @@
+import { AtlasIcon, IconName, AtlasTypography, BadgeTone } from "@atlas-ui/stable.slint";
+import { ForgeTheme } from "theme.slint";
+import {
+    ChangeRecord, ExtensionRecord, SearchRecord, TaskRecord
+} from "models.slint";
+import {
+    FieldFrame, ForgeButton, ForgeIconButton, ForgeStatusDot,
+    ForgeSwitch, MicroLabel, MonoLabel, PageHeading, PanelRule
+} from "components.slint";
+
+component SearchPage inherits Rectangle {
+    in property <[SearchRecord]> results;
+    in property <string> capture-state;
+    in-out property <int> selected-result: 0;
+    in-out property <bool> first-group-collapsed: root.capture-state == "search-collapsed";
+    in-out property <bool> second-group-collapsed: false;
+    in-out property <bool> third-group-collapsed: false;
+    background: ForgeTheme.canvas;
+    PageHeading { x: 34px; y: 30px; width: parent.width - 68px; eyebrow: "WORKSPACE / SEARCH"; title: "Search across atlas-ui"; subtitle: "9 results in 3 files"; }
+    ForgeButton { x: parent.width - 141px; y: 64px; width: 107px; height: 35px; text: "Search history"; show-icon: true; icon-name: IconName.clock; }
+    Rectangle {
+        x: 34px; y: 126px; width: parent.width - 68px; height: 574px;
+        border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+        Rectangle {
+            x: 16px; y: 16px; width: parent.width - 32px; height: 41px;
+            border-width: 1px; border-color: #343a3f; background: #111315;
+            AtlasIcon { x: 11px; y: 14px; size: 13px; name: IconName.search; icon-color: #758089; }
+            MonoLabel { x: 32px; text: "PrimaryButton"; color: #c7cbce; }
+            MonoLabel { width: parent.width - 12px; text: "↵"; color: #636b72; horizontal-alignment: right; }
+        }
+        Rectangle {
+            x: 16px; y: 64px; width: parent.width - 32px; height: 41px;
+            border-width: 1px; border-color: #343a3f; background: #111315;
+            AtlasIcon { x: 11px; y: 14px; size: 13px; name: IconName.refresh; icon-color: #59626a; }
+            MonoLabel { x: 32px; text: "Replace (optional)"; color: #656d74; }
+            Rectangle { x: parent.width - 73px; y: 5px; width: 67px; height: 30px; background: #292d31;
+                Text { text: "Replace all"; color: #70787f; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; }
+            }
+        }
+        HorizontalLayout {
+            x: 16px; y: 112px; height: 29px; spacing: 5px;
+            for option in ["Aa", "ab", ".*"]: Rectangle { width: 31px; border-width: 1px; border-color: #343a3f; background: #191d20;
+                MonoLabel { width: parent.width; text: option; color: #7e878e; horizontal-alignment: center; }
+            }
+            Text { width: 95px; text: "files to include"; color: #5e666d; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; horizontal-alignment: right; }
+            MonoLabel { width: 100px; text: "src/**, ui/**"; color: #899198; }
+        }
+        PanelRule { y: 156px; width: parent.width; }
+        Rectangle { y: 156px; width: parent.width; height: 40px;
+            Text { x: 13px; text: "PrimaryButton"; color: #d4d8db; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; vertical-alignment: center; }
+            Text { x: 88px; text: "· 9 matches"; color: #667078; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+            Text { width: parent.width - 18px; text: "⌯ Filter results"; color: #737b82; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+        }
+        VerticalLayout {
+            y: 196px; width: parent.width; spacing: 0px;
+            for result[index] in root.results: Rectangle {
+                private property <bool> result-visible: result.first
+                    || (index >= 1 && index <= 2 && !root.first-group-collapsed)
+                    || (index == 4 && !root.second-group-collapsed)
+                    || (index == 6 && !root.third-group-collapsed);
+                height: self.result-visible ? 38px : 0px;
+                opacity: self.result-visible ? 1 : 0;
+                clip: true;
+                animate height { duration: 160ms; easing: ease-in-out; }
+                animate opacity { duration: 120ms; }
+                background: root.selected-result == index ? #2a261e : result-pointer.pressed ? #292a26 : result-pointer.has-hover ? #1f2327 : result.first ? #1b1f22 : #15181b;
+                animate background { duration: 110ms; }
+                PanelRule { y: parent.height - 1px; width: parent.width; background: #24292d; }
+                if result.first: AtlasIcon { x: 14px; y: 13px; size: 12px; name: (index == 0 && root.first-group-collapsed) || (index == 3 && root.second-group-collapsed) || (index == 5 && root.third-group-collapsed) ? IconName.chevron-right : IconName.chevron-down; icon-color: #667078; }
+                if result.first: AtlasIcon { x: 33px; y: 13px; size: 12px; name: IconName.logs; icon-color: #b57c32; }
+                if result.first: MonoLabel { x: 52px; width: parent.width - 82px; text: result.file; color: #899198; }
+                if result.first: MonoLabel { width: parent.width - 14px; text: result.count; color: #667078; horizontal-alignment: right; }
+                if !result.first: MonoLabel { x: 53px; width: 28px; text: result.line; color: #606970; horizontal-alignment: right; }
+                if !result.first: MonoLabel { x: 85px; width: parent.width - 110px; text: result.before + result.match-text + result.after; color: #9da4aa; }
+                if !result.first: Rectangle { x: 111px; y: 12px; width: 76px; height: 15px; background: #8d652a45; }
+                accessible-role: AccessibleRole.button; accessible-label: result.file + " " + result.line;
+                accessible-action-default => {
+                    if (result.first) {
+                        if (index == 0) { root.first-group-collapsed = !root.first-group-collapsed; }
+                        if (index == 3) { root.second-group-collapsed = !root.second-group-collapsed; }
+                        if (index == 5) { root.third-group-collapsed = !root.third-group-collapsed; }
+                    } else { root.selected-result = index; }
+                }
+                result-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => {
+                    if (result.first) {
+                        if (index == 0) { root.first-group-collapsed = !root.first-group-collapsed; }
+                        if (index == 3) { root.second-group-collapsed = !root.second-group-collapsed; }
+                        if (index == 5) { root.third-group-collapsed = !root.third-group-collapsed; }
+                    } else { root.selected-result = index; }
+                } }
+            }
+        }
+    }
+}
+
+component SourceControlPage inherits Rectangle {
+    in property <[ChangeRecord]> changes;
+    in-out property <int> selected-change: 0;
+    background: ForgeTheme.canvas;
+    PageHeading { x: 34px; y: 30px; width: parent.width - 68px; eyebrow: "GIT / WORKING TREE"; title: "Source control"; subtitle: "⌘  main · 3 changes · ahead by 2"; }
+    ForgeButton { x: parent.width - 271px; y: 64px; width: 80px; height: 35px; text: "Refresh"; show-icon: true; icon-name: IconName.refresh; }
+    ForgeButton { x: parent.width - 184px; y: 64px; width: 150px; height: 35px; text: "Create pull request"; }
+    Rectangle {
+        x: 34px; y: 138px; width: parent.width - 68px; height: 102px;
+        border-width: 1px; border-color: ForgeTheme.border;
+        for item[index] in ["WORKING TREE|3|2 modified · 1 added", "STAGED|1|card.rs ready to commit", "COMMITS AHEAD|2|Origin / main"]: Rectangle {
+            x: index * (parent.width * 0.205); width: parent.width * 0.205; height: parent.height;
+            border-width: 1px; border-color: ForgeTheme.border;
+            MicroLabel { x: 18px; y: 14px; text: index == 0 ? "WORKING TREE" : index == 1 ? "STAGED" : "COMMITS AHEAD"; }
+            MonoLabel { x: 18px; y: 40px; text: index == 0 ? "3" : index == 1 ? "1" : "2"; color: ForgeTheme.text; font-size: 18px; }
+            Text { x: 18px; y: 67px; text: index == 0 ? "2 modified · 1 added" : index == 1 ? "card.rs ready to commit" : "Origin / main"; color: #667078; font-family: AtlasTypography.font-sans; font-size: 8px; }
+        }
+        Rectangle { x: parent.width * 0.615; width: parent.width * 0.385; height: parent.height;
+            AtlasIcon { x: 18px; y: 37px; size: 20px; name: IconName.activity; icon-color: ForgeTheme.accent; }
+            Text { x: 50px; y: 30px; text: "main"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+            MonoLabel { x: 50px; y: 48px; text: "84af91c · async task runner"; color: #667078; }
+            Rectangle { x: parent.width - 105px; y: 34px; width: 88px; height: 32px; border-width: 1px; border-color: #866126; background: #2a2318;
+                Text { text: "Publish changes"; color: #d6a34e; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; }
+            }
+        }
+    }
+    Rectangle {
+        x: 34px; y: 251px; width: parent.width - 68px; height: parent.height - 281px;
+        border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+        Rectangle { x: 0px; y: 0px; width: 270px; height: parent.height; border-width: 1px; border-color: ForgeTheme.border;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 39px;
+                MicroLabel { x: 12px; text: "CHANGES"; }
+                Text { width: parent.width - 12px; text: "+  Stage all"; color: #737b82; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+                PanelRule { y: parent.height - 1px; width: parent.width; }
+            }
+            VerticalLayout { y: 39px; width: parent.width; spacing: 0px;
+                for change[index] in root.changes: Rectangle { height: 55px; background: root.selected-change == index ? ForgeTheme.selected : change-pointer.pressed ? #292a26 : change-pointer.has-hover ? #1f2327 : #00000000;
+                    animate background { duration: 110ms; }
+                    PanelRule { y: parent.height - 1px; width: parent.width; background: #24292d; }
+                    AtlasIcon { x: 13px; y: 17px; size: 13px; name: IconName.logs; icon-color: ForgeTheme.accent; }
+                    MonoLabel { x: 34px; y: 7px; text: change.file; color: root.selected-change == index ? #e2bd78 : #9aa2a9; }
+                    MonoLabel { x: 34px; y: 26px; text: change.delta; color: ForgeTheme.success; }
+                    MonoLabel { width: parent.width - 12px; text: change.state; color: ForgeTheme.accent; horizontal-alignment: right; }
+                    accessible-role: AccessibleRole.button; accessible-label: change.file;
+                    accessible-action-default => { root.selected-change = index; }
+                    change-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.selected-change = index; } }
+                }
+            }
+            Rectangle { x: 11px; y: 218px; width: parent.width - 22px; height: 78px; border-width: 1px; border-color: #32383c; background: #111315;
+                MonoLabel { x: 9px; y: 9px; text: "Handle task execution asynchronously"; color: #c3c7ca; }
+            }
+            ForgeButton { x: 11px; y: 296px; width: parent.width - 22px; height: 34px; text: "Commit staged changes     ⌘↵"; accent: true; }
+        }
+        Rectangle { x: 270px; width: parent.width - 270px; height: parent.height; background: #15181b;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 42px; border-width: 1px; border-color: ForgeTheme.border;
+                AtlasIcon { x: 13px; y: 14px; size: 13px; name: IconName.logs; icon-color: ForgeTheme.accent; }
+                MonoLabel { x: 34px; text: "src/main.rs"; color: #c5c9cc; }
+                Text { x: 116px; text: "Working Tree"; color: #6b747b; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
+                Rectangle { x: parent.width - 82px; y: 7px; width: 40px; height: 29px; border-width: 1px; border-color: ForgeTheme.border; Text { text: "Inline"; color: #767f86; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; } }
+                ForgeIconButton { x: parent.width - 36px; y: 7px; icon-name: IconName.settings; accessible-label: "Diff options"; }
+            }
+            Rectangle { y: 42px; width: parent.width; height: 33px; background: #17231f;
+                MonoLabel { x: 12px; text: "@@ -18,4 +18,9 @@ fn main() -> anyhow::Result<()>"; color: #6d9586; }
+                MonoLabel { width: parent.width - 12px; text: "+8 −2"; color: ForgeTheme.success; horizontal-alignment: right; }
+            }
+            VerticalLayout { y: 75px; width: parent.width; spacing: 0px;
+                for line[index] in ["18  18        app.on_run_task(move |task_id| {", "19  19            let handle = weak.clone();", "20              execute_task(task_id);", "    20            tokio::spawn(async move {", "    21                let result = execute_task(task_id).await;", "    22                handle.upgrade_in_event_loop(move |ui| {", "    23                    ui.set_status(SharedString::from(result));", "    24                });", "    25            });", "21  26        });"]: Rectangle {
+                    height: 33px; background: index == 2 ? #321f21 : index >= 3 && index <= 8 ? #14281c : #15181b;
+                    PanelRule { y: parent.height - 1px; width: parent.width; background: #24292d; }
+                    MonoLabel { x: 11px; text: line; color: index == 2 ? #cc8180 : index >= 3 && index <= 8 ? #83b99a : #a5abb0; }
+                }
+            }
+            Rectangle { y: parent.height - 30px; width: parent.width; height: 30px; border-width: 1px; border-color: ForgeTheme.border;
+                MonoLabel { width: parent.width - 10px; text: "UTF-8    LF    Rust"; color: #667078; horizontal-alignment: right; }
+            }
+        }
+    }
+}
+
+component TaskCard inherits Rectangle {
+    in property <TaskRecord> task;
+    border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+    Rectangle { x: 17px; y: 17px; width: 37px; height: 37px; border-width: 1px; border-color: #4d3a20; background: #282117;
+        AtlasIcon { x: 10px; y: 10px; size: 16px; name: root.task.icon == 1 ? IconName.play : root.task.icon == 3 ? IconName.shield : root.task.icon == 5 ? IconName.layers : IconName.settings; icon-color: ForgeTheme.accent; }
+    }
+    ForgeStatusDot { x: parent.width - 66px; y: 21px; width: 5px; height: 5px; label: root.task.status; tone: root.task.tone == 1 ? BadgeTone.warning : BadgeTone.healthy; indicator-color: root.task.tone == 1 ? ForgeTheme.warning : root.task.tone == 2 ? ForgeTheme.muted : ForgeTheme.success; }
+    Text { width: parent.width - 17px; y: 17px; text: root.task.status; color: root.task.tone == 1 ? ForgeTheme.warning : root.task.tone == 2 ? ForgeTheme.muted : ForgeTheme.success; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; }
+    Text { x: 17px; y: 67px; text: root.task.name; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+    MonoLabel { x: 17px; y: 88px; width: parent.width - 34px; text: root.task.command; color: #747d84; overflow: elide; }
+    MicroLabel { x: 17px; y: 119px; text: "LAST RUN"; }
+    MicroLabel { x: parent.width / 2 + 5px; y: 119px; text: "DURATION"; }
+    MonoLabel { x: 17px; y: 137px; text: root.task.last; }
+    MonoLabel { x: parent.width / 2 + 5px; y: 137px; text: root.task.duration; }
+    PanelRule { x: 17px; y: parent.height - 52px; width: parent.width - 34px; }
+    ForgeButton { x: 17px; y: parent.height - 42px; width: parent.width - 65px; height: 33px; text: "Run Task"; show-icon: true; icon-name: IconName.play; }
+    ForgeIconButton { x: parent.width - 42px; y: parent.height - 42px; width: 33px; height: 33px; icon-name: IconName.settings; accessible-label: "Task settings"; }
+}
+
+component TasksPage inherits Rectangle {
+    in property <[TaskRecord]> tasks;
+    in-out property <int> selected-run: 0;
+    background: ForgeTheme.canvas;
+    PageHeading { x: 34px; y: 30px; width: parent.width - 68px; eyebrow: "AUTOMATION / TASKS"; title: "Workspace tasks"; subtitle: "Build, test, analyze, and package atlas-ui."; }
+    ForgeButton { x: parent.width - 137px; y: 64px; width: 103px; height: 35px; text: "Create task"; show-icon: true; icon-name: IconName.add; accent: true; }
+    Rectangle { x: 34px; y: 129px; width: parent.width - 68px; height: 98px; border-width: 1px; border-color: ForgeTheme.border;
+        for stat[index] in ["LAST BUILD|SUCCESS|0.48s · 2 min ago", "TEST SUITE|48 / 48|All tests passing", "DIAGNOSTICS|2 WARNINGS|0 errors", "PIPELINE TIME|6.42s|−0.8s from last run"]: Rectangle {
+            x: index * parent.width / 4; width: parent.width / 4; height: parent.height; border-width: 1px; border-color: ForgeTheme.border;
+            AtlasIcon { x: 18px; y: 33px; size: 20px; name: index == 3 ? IconName.clock : index == 2 ? IconName.warning : IconName.check; icon-color: index == 2 ? ForgeTheme.warning : ForgeTheme.success; }
+            MicroLabel { x: 48px; y: 19px; text: index == 0 ? "LAST BUILD" : index == 1 ? "TEST SUITE" : index == 2 ? "DIAGNOSTICS" : "PIPELINE TIME"; }
+            MonoLabel { x: 48px; y: 39px; text: index == 0 ? "SUCCESS" : index == 1 ? "48 / 48" : index == 2 ? "2 WARNINGS" : "6.42s"; color: ForgeTheme.text; }
+            Text { x: 48px; y: 58px; text: index == 0 ? "0.48s · 2 min ago" : index == 1 ? "All tests passing" : index == 2 ? "0 errors" : "−0.8s from last run"; color: #667078; font-family: AtlasTypography.font-sans; font-size: 8px; }
+        }
+    }
+    HorizontalLayout { x: 34px; y: 237px; width: parent.width - 68px; height: 211px; spacing: 11px;
+        TaskCard { task: root.tasks[0]; } TaskCard { task: root.tasks[1]; } TaskCard { task: root.tasks[2]; }
+    }
+    HorizontalLayout { x: 34px; y: 459px; width: parent.width - 68px; height: 211px; spacing: 11px;
+        TaskCard { task: root.tasks[3]; } TaskCard { task: root.tasks[4]; } TaskCard { task: root.tasks[5]; }
+    }
+    Rectangle { x: 34px; y: 681px; width: parent.width - 68px; height: 142px; border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+        Rectangle { x: 0px; y: 0px; height: 43px; width: parent.width;
+            MicroLabel { x: 13px; text: "RECENT RUNS"; }
+            Text { width: parent.width - 13px; text: "View full task history  ›"; color: #c79042; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+            PanelRule { y: parent.height - 1px; width: parent.width; }
+        }
+        for row[index] in ["Build workspace|cargo build --workspace|0.48s|2 min ago", "Run application|cargo run --package atlas-ui|1.84s|8 min ago"]: Rectangle {
+            y: 43px + index * 49px; width: parent.width; height: 49px;
+            background: root.selected-run == index ? ForgeTheme.selected : run-pointer.pressed ? #292a26 : run-pointer.has-hover ? #1f2327 : #00000000;
+            animate background { duration: 110ms; }
+            if index == 0: PanelRule { y: parent.height - 1px; width: parent.width; background: #24292d; }
+            ForgeStatusDot { x: 14px; y: 21px; label: "Success"; tone: BadgeTone.healthy; indicator-color: ForgeTheme.success; }
+            Text { x: 32px; text: index == 0 ? "Build workspace" : "Run application"; color: #90989e; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+            MonoLabel { x: 200px; text: index == 0 ? "cargo build --workspace" : "cargo run --package atlas-ui"; color: #656e75; }
+            MonoLabel { width: parent.width - 130px; text: index == 0 ? "0.48s" : "1.84s"; color: #90989e; horizontal-alignment: right; }
+            Text { width: parent.width - 24px; text: index == 0 ? "2 min ago" : "8 min ago"; color: #5e666d; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+            accessible-role: AccessibleRole.button; accessible-label: index == 0 ? "Build workspace" : "Run application";
+            accessible-action-default => { root.selected-run = index; }
+            run-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.selected-run = index; } }
+        }
+    }
+}
+
+component ExtensionCard inherits Rectangle {
+    in property <ExtensionRecord> extension;
+    border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+    Rectangle { x: 17px; y: 17px; width: 42px; height: 42px; background: root.extension.tone == 0 ? #b8703d : root.extension.tone == 1 ? #4f9e87 : root.extension.tone == 2 ? #678eaa : root.extension.tone == 3 ? #b05858 : #785f9e;
+        MonoLabel { width: parent.width; text: root.extension.initials; color: #ffffff; horizontal-alignment: center; }
+    }
+    AtlasIcon { x: parent.width - 32px; y: 22px; size: 12px; name: IconName.grid; icon-color: #596168; }
+    Text { x: 17px; y: 72px; text: root.extension.name; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+    Text { x: 17px; y: 90px; text: "by " + root.extension.author; color: #646d74; font-family: AtlasTypography.font-sans; font-size: 8px; }
+    Text { x: 17px; y: 119px; text: root.extension.category; color: #6f777e; font-family: AtlasTypography.font-sans; font-size: 8px; }
+    Text { width: parent.width - 17px; y: 119px; text: "⇩ " + root.extension.downloads; color: #6f777e; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; }
+    PanelRule { x: 17px; y: parent.height - 58px; width: parent.width - 34px; background: #262b2f; }
+    MonoLabel { x: 17px; y: parent.height - 40px; text: "v" + root.extension.version; color: #697179; }
+    Rectangle { x: parent.width - 84px; y: parent.height - 48px; width: 67px; height: 30px; border-width: 1px; border-color: root.extension.state == "Enabled" ? #343a3e : #996d2c; background: root.extension.state == "Enabled" ? #1d2023 : #b47a2e;
+        Text { text: root.extension.state == "Enabled" ? "Manage  ⌄" : "Install"; color: root.extension.state == "Enabled" ? #899198 : #171109; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; }
+    }
+}
+
+component ExtensionsPage inherits Rectangle {
+    in property <[ExtensionRecord]> extensions;
+    in-out property <bool> recommended: false;
+    background: ForgeTheme.canvas;
+    PageHeading { x: 34px; y: 30px; width: parent.width - 68px; eyebrow: "FORGE / EXTENSIONS"; title: "Engineering extensions"; subtitle: "Language tooling, diagnostics, and workflow integrations."; }
+    ForgeButton { x: parent.width - 137px; y: 64px; width: 103px; height: 35px; text: "Check updates"; show-icon: true; icon-name: IconName.refresh; }
+    Rectangle { x: 34px; y: 126px; width: parent.width - 68px; height: 132px; border-width: 1px; border-color: #293b36; background: #18201e;
+        Rectangle { x: 0px; y: 0px; width: parent.width; height: 2px; background: #58a58e; }
+        AtlasIcon { x: 25px; y: 51px; size: 26px; name: IconName.grid; icon-color: #69b69d; }
+        MicroLabel { x: 60px; y: 34px; text: "FEATURED FOR ATLAS"; color: #648e82; }
+        Text { x: 60px; y: 53px; text: "Slint Tools 1.14"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 700; }
+        Text { x: 60px; y: 77px; text: "Live preview, language intelligence, and component navigation."; color: #75827e; font-family: AtlasTypography.font-sans; font-size: 8px; }
+        Rectangle { x: parent.width - 449px; y: 26px; width: 285px; height: 82px; border-width: 1px; border-color: #38544b; background: #111714;
+            Text { x: 12px; y: 8px; width: parent.width - 24px; height: parent.height - 16px; text: "export component AppWindow\ninherits Window {\n    preferred-width: 800px;\n}"; color: #9ab4aa; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+        }
+        Rectangle { x: parent.width - 145px; y: 48px; width: 125px; height: 35px; border-width: 1px; border-color: open-pointer.has-hover ? #69ad96 : #3f6f61; background: open-pointer.pressed ? #294f43 : open-pointer.has-hover ? #285044 : #213a33;
+            animate background { duration: 110ms; }
+            Text { text: "Open Extension  ↗"; color: #88c5b0; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; }
+            accessible-role: AccessibleRole.button; accessible-label: "Open Extension";
+            open-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; }
+        }
+    }
+    Rectangle { x: 34px; y: 268px; width: parent.width - 68px; height: parent.height - 298px; border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+        Rectangle { x: 0px; y: 0px; width: parent.width; height: 56px;
+            PanelRule { y: parent.height - 1px; width: parent.width; }
+            Rectangle { x: 15px; width: 67px; height: parent.height;
+                background: !root.recommended ? #22241f : installed-pointer.pressed ? #292a26 : installed-pointer.has-hover ? #1f2327 : #00000000;
+                animate background { duration: 110ms; }
+                Text { text: "Installed  4"; color: !root.recommended ? #d8dbde : #737c83; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; }
+                if !root.recommended: Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: ForgeTheme.accent; }
+                accessible-role: AccessibleRole.tab; accessible-label: "Installed extensions";
+                accessible-action-default => { root.recommended = false; }
+                installed-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.recommended = false; } }
+            }
+            Rectangle { x: 82px; width: 94px; height: parent.height;
+                background: root.recommended ? #22241f : recommended-pointer.pressed ? #292a26 : recommended-pointer.has-hover ? #1f2327 : #00000000;
+                animate background { duration: 110ms; }
+                Text { text: "Recommended  2"; color: root.recommended ? #d8dbde : #737c83; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: center; vertical-alignment: center; }
+                if root.recommended: Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: ForgeTheme.accent; }
+                accessible-role: AccessibleRole.tab; accessible-label: "Recommended extensions";
+                accessible-action-default => { root.recommended = true; }
+                recommended-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.recommended = true; } }
+            }
+            FieldFrame { x: parent.width - 255px; y: 10px; width: 240px; height: 35px; text: ""; placeholder: "Search extensions..."; icon-name: IconName.search; }
+        }
+        if !root.recommended: Rectangle {
+            y: 56px; width: parent.width; height: parent.height - 56px;
+            HorizontalLayout { x: 15px; y: 15px; width: parent.width - 30px; height: 201px; spacing: 11px;
+                ExtensionCard { extension: root.extensions[0]; } ExtensionCard { extension: root.extensions[1]; } ExtensionCard { extension: root.extensions[2]; }
+            }
+            ExtensionCard { x: 15px; y: 227px; width: (parent.width - 52px) / 3; height: 201px; extension: root.extensions[3]; }
+        }
+        if root.recommended: HorizontalLayout { x: 15px; y: 71px; width: parent.width - 30px; height: 201px; spacing: 11px;
+            ExtensionCard { extension: root.extensions[4]; } ExtensionCard { extension: root.extensions[5]; } Rectangle { background: #00000000; }
+        }
+    }
+}
+
+component SettingRow inherits Rectangle {
+    in property <string> title;
+    in property <string> detail;
+    in property <string> value;
+    in property <bool> toggle: false;
+    in property <bool> checked: false;
+    height: 68px;
+    Text { x: 0px; y: 15px; text: root.title; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+    Text { x: 0px; y: 34px; text: root.detail; color: #687178; font-family: AtlasTypography.font-sans; font-size: 8px; }
+    if root.toggle: ForgeSwitch { x: parent.width - 31px; y: 26px; width: 31px; checked: root.checked; label: root.title; }
+    if !root.toggle: FieldFrame { x: parent.width - 260px; y: 17px; width: 260px; height: 35px; text: root.value; }
+}
+
+component SettingsPage inherits Rectangle {
+    in-out property <int> selected-section: 0;
+    background: ForgeTheme.canvas;
+    PageHeading { x: 34px; y: 30px; width: parent.width - 68px; eyebrow: "FORGE / CONFIGURATION"; title: "Workspace settings"; subtitle: "Local preferences for atlas-ui and the engineering environment."; }
+    ForgeButton { x: parent.width - 165px; y: 64px; width: 131px; height: 35px; text: "Open settings.json"; show-icon: true; icon-name: IconName.logs; }
+    Rectangle { x: 34px; y: 126px; width: parent.width - 68px; height: parent.height - 156px; border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+        Rectangle { x: 0px; y: 0px; width: 245px; height: parent.height; border-width: 1px; border-color: ForgeTheme.border; background: #15181b;
+            FieldFrame { x: 10px; y: 15px; width: parent.width - 20px; height: 36px; text: ""; placeholder: "Search settings"; icon-name: IconName.search; }
+            VerticalLayout { x: 10px; y: 61px; width: parent.width - 20px; spacing: 0px;
+                for item[index] in ["Editor", "Appearance", "Terminal", "Rust", "Slint", "Keymap"]: Rectangle {
+                    height: 42px; background: root.selected-section == index ? #22241f : setting-pointer.pressed ? #292a26 : setting-pointer.has-hover ? #1f2327 : #00000000;
+                    animate background { duration: 110ms; }
+                    if root.selected-section == index: Rectangle { x: 0px; y: 0px; width: 3px; height: parent.height; background: ForgeTheme.accent; }
+                    AtlasIcon { x: 9px; y: 14px; size: 13px; name: index == 0 ? IconName.settings : index == 2 ? IconName.terminal : index == 4 ? IconName.layers : IconName.grid; icon-color: root.selected-section == index ? ForgeTheme.accent : #7a838a; }
+                    Text { x: 34px; text: item; color: root.selected-section == index ? #dbb56d : #7a838a; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; }
+                    AtlasIcon { x: parent.width - 18px; y: 16px; size: 10px; name: IconName.chevron-right; icon-color: #626a71; }
+                    accessible-role: AccessibleRole.button; accessible-label: item;
+                    accessible-action-default => { root.selected-section = index; }
+                    setting-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.selected-section = index; } }
+                }
+            }
+            Rectangle { x: 17px; y: parent.height - 114px; width: parent.width - 34px; height: 47px; border-width: 1px; border-color: #2c3337; background: #191d20;
+                AtlasIcon { x: 11px; y: 15px; size: 15px; name: IconName.settings; icon-color: ForgeTheme.accent; }
+                Text { x: 35px; y: 10px; text: "Workspace"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+                MonoLabel { x: 35px; y: 26px; text: "atlas-ui/.forge"; color: #5f6870; }
+            }
+        }
+        Rectangle { x: 245px; width: parent.width - 245px; height: parent.height; background: #15181b;
+            MicroLabel { x: 30px; y: 22px; text: "EDITOR"; }
+            Text { x: 30px; y: 40px; text: "Editor preferences"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 15px; font-weight: 700; }
+            Text { x: 30px; y: 63px; text: "Settings in this section apply to the current workspace."; color: #6f787f; font-family: AtlasTypography.font-sans; font-size: 8px; }
+            PanelRule { x: 30px; y: 92px; width: parent.width - 60px; }
+            MicroLabel { x: 30px; y: 108px; text: "BEHAVIOR"; }
+            SettingRow { x: 30px; y: 133px; width: parent.width - 60px; title: "Auto Save"; detail: "Save modified files after a short delay."; toggle: true; checked: true; }
+            SettingRow { x: 30px; y: 201px; width: parent.width - 60px; title: "Format On Save"; detail: "Run the active formatter before each save."; toggle: true; checked: true; }
+            SettingRow { x: 30px; y: 269px; width: parent.width - 60px; title: "Default Formatter"; detail: "Formatter used for Rust source files."; value: "rustfmt                                   ⌄"; }
+            PanelRule { x: 30px; y: 345px; width: parent.width - 60px; }
+            MicroLabel { x: 30px; y: 361px; text: "EDITOR"; }
+            SettingRow { x: 30px; y: 386px; width: parent.width - 60px; title: "Font Family"; detail: "Monospace font for source code."; value: "SFMono-Regular"; }
+            SettingRow { x: 30px; y: 454px; width: parent.width - 60px; title: "Font Size"; detail: "Editor text size in logical pixels."; value: "13                                             px"; }
+            SettingRow { x: 30px; y: 522px; width: parent.width - 60px; title: "Tab Size"; detail: "Spaces inserted for indentation."; value: "4 spaces                                  ⌄"; }
+            PanelRule { x: 30px; y: 598px; width: parent.width - 60px; }
+            MicroLabel { x: 30px; y: 614px; text: "PRIVACY"; }
+            SettingRow { x: 30px; y: 639px; width: parent.width - 60px; title: "Usage Telemetry"; detail: "Send anonymous engineering performance metrics."; toggle: true; checked: false; }
+        }
+    }
+}
+
+export component ForgePages inherits Rectangle {
+    in property <int> page;
+    in property <string> capture-state;
+    in property <[SearchRecord]> search-results;
+    in property <[ChangeRecord]> changes;
+    in property <[TaskRecord]> tasks;
+    in property <[ExtensionRecord]> extensions;
+    background: ForgeTheme.canvas;
+    if root.page == 1: SearchPage { width: parent.width; height: parent.height; results: root.search-results; capture-state: root.capture-state; }
+    if root.page == 2: SourceControlPage { width: parent.width; height: parent.height; changes: root.changes; }
+    if root.page == 4: TasksPage { width: parent.width; height: parent.height; tasks: root.tasks; }
+    if root.page == 5: ExtensionsPage { width: parent.width; height: parent.height; extensions: root.extensions; recommended: root.capture-state == "extensions-recommended"; }
+    if root.page == 6: SettingsPage { width: parent.width; height: parent.height; }
+}

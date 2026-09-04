@@ -1,0 +1,29 @@
+import {
+    ServiceRecord, ActivityRecord, AlertRecord, LogRecord, TeamRecord,
+    IntegrationRecord, RegionRecord
+} from "models.slint";
+import { AnalyticsPage } from "secondary-analytics.slint";
+import { ServicesPage } from "secondary-services.slint";
+import { ActivityPage, AlertsPage } from "secondary-ops.slint";
+import { LogsPage, TeamPage, IntegrationsPage, SettingsPage } from "secondary-admin.slint";
+
+export component CommandSecondaryPage inherits Rectangle {
+    in property <int> page: 1;
+    in property <[ServiceRecord]> services;
+    in property <[ActivityRecord]> activities;
+    in property <[AlertRecord]> alerts;
+    in property <[LogRecord]> logs;
+    in property <[TeamRecord]> team;
+    in property <[IntegrationRecord]> integrations;
+    in property <[RegionRecord]> regions;
+    background: #00000000;
+
+    if root.page == 1: AnalyticsPage { x: 0px; y: 0px; width: parent.width; regions: root.regions; }
+    if root.page == 2: ServicesPage { x: 0px; y: 0px; width: parent.width; services: root.services; }
+    if root.page == 3: ActivityPage { x: 0px; y: 0px; width: parent.width; activities: root.activities; }
+    if root.page == 4: AlertsPage { x: 0px; y: 0px; width: parent.width; alerts: root.alerts; }
+    if root.page == 5: LogsPage { x: 0px; y: 0px; width: parent.width; logs: root.logs; }
+    if root.page == 6: TeamPage { x: 0px; y: 0px; width: parent.width; team: root.team; }
+    if root.page == 7: IntegrationsPage { x: 0px; y: 0px; width: parent.width; integrations: root.integrations; }
+    if root.page == 8: SettingsPage { x: 0px; y: 0px; width: parent.width; }
+}

@@ -1,0 +1,27 @@
+export struct MetricRecord {
+    label: string,
+    value: string,
+    trend: string,
+    context: string,
+    style: int,
+}
+
+export struct ServiceRecord {
+    initials: string,
+    name: string,
+    status: string,
+    region: string,
+    requests: string,
+    latency: string,
+    errors: string,
+    version: string,
+    tone: int,
+}
+
+export struct HealthRecord { name: string, latency: string, status: string, tone: int }
+export struct ActivityRecord { title: string, detail: string, actor: string, category: string, time: string, icon: int }
+export struct AlertRecord { id: int, severity: string, title: string, service: string, region: string, duration: string, owner: string, status: string, tone: int }
+export struct LogRecord { time: string, service: string, level: string, event: string, attributes: string, tone: int }
+export struct TeamRecord { name: string, initials: string, email: string, role: string, team: string, status: string, last: string, tone: int }
+export struct IntegrationRecord { name: string, category: string, description: string, status: string, tone: int, icon: int }
+export struct RegionRecord { name: string, code: string, value: string, latency: string, share: float }

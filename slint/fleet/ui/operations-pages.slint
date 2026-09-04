@@ -1,0 +1,124 @@
+import { AtlasIcon, IconName, AtlasTypography } from "@atlas-ui/stable.slint";
+import { FleetTheme } from "theme.slint";
+import { DeploymentRecord } from "models.slint";
+import { FleetSurface, PageHeading, FleetButton, InstrumentLabel, FleetStatus, FleetMeter, SummaryCell, FleetTableRow } from "components.slint";
+
+component TopologyNode inherits Rectangle {
+    in property <string> title;
+    in property <string> detail;
+    in property <IconName> icon-name: IconName.database;
+    in property <int> tone: 0;
+    width: 160px; height: 58px;
+    border-width: 1px; border-color: root.tone == 1 ? #76532c : #2d5660;
+    background: root.tone == 1 ? #201a14 : #111c22;
+    Rectangle { x: 10px; y: 11px; width: 35px; height: 35px; border-width: 1px; border-color: root.tone == 1 ? #76532c : #2c5963; background: #14242b;
+        AtlasIcon { x: 9px; y: 9px; size: 16px; name: root.icon-name; icon-color: root.tone == 1 ? FleetTheme.warning : FleetTheme.cyan; }
+    }
+    Text { x: 55px; y: 12px; width: parent.width - 64px; height: 16px; text: root.title; color: root.tone == 1 ? FleetTheme.warning : #c3d0d5; font-family: AtlasTypography.font-mono; font-size: 9px; font-weight: 650; vertical-alignment: center; overflow: elide; }
+    Text { x: 55px; y: 31px; width: parent.width - 64px; height: 14px; text: root.detail; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 7px; vertical-alignment: center; overflow: elide; }
+}
+
+export component TopologyPage inherits Rectangle {
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "NETWORK / SIMULATED MAP"; title: "Infrastructure topology"; subtitle: "Fictional physical and logical connections across the demo fleet."; }
+        FleetButton { x: parent.width - 211px; y: 14px; width: 88px; text: "FILTER"; show-icon: true; icon-name: IconName.filter; }
+        FleetButton { x: parent.width - 115px; y: 14px; width: 115px; text: "EXPORT MAP"; show-icon: true; icon-name: IconName.download; }
+        FleetSurface { y: 84px; width: parent.width; height: min(650px, parent.height - 84px); background: #0d151a;
+            for row in 22: Rectangle { y: row * 30px; width: parent.width; height: 1px; background: #18262d; }
+            for column in 44: Rectangle { x: column * 30px; width: 1px; height: parent.height; background: #18262d; }
+            Text { x: 13px; y: 11px; text: "DEMO GRID / X48–Y22"; color: #455d68; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; }
+            Rectangle { x: parent.width / 2; y: 76px; width: 1px; height: 42px; background: FleetTheme.cyan; }
+            Rectangle { x: parent.width / 2; y: 176px; width: 1px; height: 42px; background: FleetTheme.cyan; }
+            Rectangle { x: parent.width / 2; y: 276px; width: 1px; height: 46px; background: FleetTheme.cyan; }
+            Rectangle { x: parent.width * 0.23; y: 321px; width: parent.width * 0.54; height: 1px; background: FleetTheme.cyan; }
+            Rectangle { x: parent.width * 0.23; y: 321px; width: 1px; height: 48px; background: FleetTheme.cyan; }
+            Rectangle { x: parent.width * 0.50; y: 321px; width: 1px; height: 48px; background: FleetTheme.warning; }
+            Rectangle { x: parent.width * 0.77; y: 321px; width: 1px; height: 48px; background: FleetTheme.cyan; }
+            Rectangle { x: parent.width * 0.77; y: 427px; width: 1px; height: 49px; background: FleetTheme.cyan; }
+            TopologyNode { x: (parent.width - self.width) / 2; y: 18px; title: "INTERNET"; detail: "12.8 GBPS"; icon-name: IconName.globe; }
+            TopologyNode { x: (parent.width - self.width) / 2; y: 118px; title: "GATEWAY"; detail: "GW-DEMO-01 · ONLINE"; icon-name: IconName.cloud; }
+            TopologyNode { x: (parent.width - self.width) / 2; y: 218px; title: "CORE SWITCH"; detail: "48 PORT · 10 GBPS"; icon-name: IconName.webhook; }
+            TopologyNode { x: parent.width * 0.23 - self.width / 2; y: 369px; title: "API-DEMO-01"; detail: "CPU 42% · 31°C"; icon-name: IconName.database; }
+            TopologyNode { x: parent.width * 0.50 - self.width / 2; y: 369px; title: "NODE-DEMO-A"; detail: "CPU 84% · 52°C"; icon-name: IconName.database; tone: 1; }
+            TopologyNode { x: parent.width * 0.77 - self.width / 2; y: 369px; title: "NODE-DEMO-B"; detail: "CPU 38% · 37°C"; icon-name: IconName.database; }
+            TopologyNode { x: parent.width * 0.77 - self.width / 2; y: 476px; title: "RPI-DEMO-01"; detail: "CPU 34% · 48°C"; icon-name: IconName.cpu; }
+            Rectangle { x: 14px; y: parent.height - 42px; width: 295px; height: 28px; border-width: 1px; border-color: #273a43; background: #10191e;
+                FleetStatus { x: 10px; y: 6px; width: 72px; label: "HEALTHY"; tone: 0; }
+                FleetStatus { x: 100px; y: 6px; width: 78px; label: "DEGRADED"; tone: 1; }
+                FleetStatus { x: 206px; y: 6px; width: 70px; label: "OFFLINE"; tone: 3; }
+            }
+        }
+    }
+}
+
+component StageCell inherits FleetSurface {
+    in property <string> index;
+    in property <string> label;
+    in property <string> value;
+    in property <string> detail;
+    in property <int> tone: 0;
+    Text { x: 12px; y: 12px; width: 25px; text: root.index; color: #49616c; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    FleetStatus { x: 42px; y: 10px; width: parent.width - 54px; label: root.label; tone: root.tone; }
+    Text { x: 12px; y: 36px; text: root.value; color: root.tone == 3 ? FleetTheme.danger : FleetTheme.text; font-family: AtlasTypography.font-mono; font-size: 20px; font-weight: 650; vertical-alignment: center; }
+    Text { x: 12px; y: 65px; width: parent.width - 24px; text: root.detail; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+}
+
+component DeploymentRow inherits FleetTableRow {
+    in property <DeploymentRecord> item;
+    row-label: root.item.device + " deployment";
+    height: 53px;
+    Rectangle { y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border-soft; }
+    Rectangle { x: 11px; y: 13px; width: 27px; height: 27px; border-width: 1px; border-color: #2c525c; background: #14242b;
+        AtlasIcon { x: 8px; y: 8px; size: 11px; name: IconName.cpu; icon-color: FleetTheme.cyan; }
+    }
+    Text { x: 47px; y: 8px; width: parent.width * 0.17; height: 15px; text: root.item.device; color: #c3cfd4; font-family: AtlasTypography.font-mono; font-size: 9px; font-weight: 600; vertical-alignment: center; }
+    Text { x: 47px; y: 27px; width: parent.width * 0.17; height: 13px; text: root.item.location; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; vertical-alignment: center; overflow: elide; }
+    FleetStatus { x: parent.width * 0.25; y: 18px; width: parent.width * 0.12; label: root.item.state; tone: root.item.tone; }
+    Rectangle { x: parent.width * 0.40; y: 17px; width: parent.width * 0.24; height: 20px;
+        FleetMeter { x: 0px; y: 8px; width: parent.width - 50px; value: root.item.progress; meter-color: root.item.tone == 3 ? FleetTheme.danger : root.item.tone == 1 ? FleetTheme.cyan : root.item.tone == 0 ? FleetTheme.green : #536873; }
+        Text { x: parent.width - 40px; width: 40px; text: root.item.progress + "%"; color: #718690; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+    }
+    Text { x: parent.width * 0.69; width: parent.width * 0.10; text: root.item.started; color: #647984; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Text { x: parent.width * 0.82; width: parent.width * 0.10; text: root.item.duration; color: #647984; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+    Text { x: 0px; width: parent.width - 12px; text: "•••"; color: #506671; font-family: AtlasTypography.font-mono; font-size: 9px; horizontal-alignment: right; vertical-alignment: center; }
+}
+
+export component DeploymentsPage inherits Rectangle {
+    in property <[DeploymentRecord]> deployments;
+    in-out property <int> selected-deployment: 0;
+    Rectangle { x: 24px; y: 22px; width: parent.width - 48px; height: parent.height - 44px;
+        PageHeading { x: 0px; y: 0px; width: parent.width; eyebrow: "ROLLING RELEASE / AGENT 1.4.2"; title: "Deployments"; subtitle: "Track configuration and agent rollouts across the demo fleet."; }
+        FleetButton { x: parent.width - 246px; y: 14px; width: 107px; text: "PAUSE ALL"; show-icon: true; icon-name: IconName.stop; }
+        FleetButton { x: parent.width - 131px; y: 14px; width: 131px; text: "NEW DEPLOYMENT"; show-icon: true; icon-name: IconName.download; accent: true; }
+        FleetSurface { y: 84px; width: parent.width; height: 132px;
+            InstrumentLabel { x: 14px; y: 13px; width: 160px; text: "ACTIVE ROLLOUT / DEP-1042"; }
+            Text { x: 14px; y: 34px; height: 24px; text: "Atlas Agent 1.4.2"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 17px; font-weight: 650; vertical-alignment: center; }
+            Text { x: 14px; y: 64px; text: "18 completed  ·  2 deploying  ·  3 queued  ·  1 failed"; color: #647a85; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }
+            Text { x: parent.width - 150px; y: 19px; width: 130px; text: "75%"; color: FleetTheme.cyan; font-family: AtlasTypography.font-mono; font-size: 31px; font-weight: 650; horizontal-alignment: right; vertical-alignment: center; }
+            Text { x: parent.width - 150px; y: 55px; width: 130px; text: "18 / 24 DEVICES"; color: FleetTheme.muted; font-family: AtlasTypography.font-mono; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
+            Rectangle { x: 14px; y: 91px; width: parent.width - 28px; height: 27px; background: #0e161b;
+                for segment in 24: Rectangle { x: segment * (parent.width / 24); width: parent.width / 24 - 2px; height: parent.height; background: segment < 18 ? #287f78 : segment == 18 ? FleetTheme.danger : #253640; }
+            }
+        }
+        GridLayout { y: 225px; width: parent.width; height: 88px; spacing: 8px;
+            StageCell { row:0; col:0; index:"01"; label:"COMPLETED"; value:"18"; detail:"AVG 1M 56S"; tone:0; }
+            StageCell { row:0; col:1; index:"02"; label:"DEPLOYING"; value:"2"; detail:"RPI-DEMO-02 +1"; tone:1; }
+            StageCell { row:0; col:2; index:"03"; label:"QUEUED"; value:"3"; detail:"NEXT IN 4M"; tone:2; }
+            StageCell { row:0; col:3; index:"04"; label:"FAILED"; value:"1"; detail:"EDGE-DEMO-03"; tone:3; }
+        }
+        FleetSurface { y: 322px; width: parent.width; height: parent.height - 322px;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 34px; background: #151e24;
+                InstrumentLabel { x: 11px; width: parent.width * 0.24; text: "DEVICE / LOCATION"; }
+                InstrumentLabel { x: parent.width * 0.25; width: parent.width * 0.12; text: "STATE"; }
+                InstrumentLabel { x: parent.width * 0.40; width: parent.width * 0.24; text: "PROGRESS"; }
+                InstrumentLabel { x: parent.width * 0.69; width: parent.width * 0.10; text: "STARTED"; }
+                InstrumentLabel { x: parent.width * 0.82; width: parent.width * 0.10; text: "DURATION"; }
+            }
+            for item[index] in root.deployments: DeploymentRow {
+                y: 34px + index * 53px; width: parent.width;
+                item: item; selected: root.selected-deployment == index;
+                clicked => { root.selected-deployment = index; }
+            }
+        }
+    }
+}

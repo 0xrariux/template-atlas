@@ -1,0 +1,54 @@
+export struct DeviceRecord {
+    id: string,
+    model: string,
+    location: string,
+    state: string,
+    tone: int,
+    cpu: int,
+    memory: string,
+    memory-percent: int,
+    temp: int,
+    disk: int,
+    services: int,
+    ip: string,
+    kind: string,
+}
+export struct DeploymentRecord {
+    device: string,
+    location: string,
+    state: string,
+    tone: int,
+    progress: int,
+    started: string,
+    duration: string,
+}
+
+export struct LogRecord {
+    time: string,
+    device: string,
+    service: string,
+    level: string,
+    tone: int,
+    message: string,
+}
+
+export struct IncidentRecord {
+    device: string,
+    severity: string,
+    title: string,
+    detail: string,
+    time: string,
+    status: string,
+    owner: string,
+    tone: int,
+}
+
+export struct WorkflowRecord {
+    name: string,
+    trigger: string,
+    actions: int,
+    runs: int,
+    success: string,
+    state: string,
+    tone: int,
+}

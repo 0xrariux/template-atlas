@@ -1,0 +1,63 @@
+export struct TreeRecord {
+    name: string,
+    depth: int,
+    kind: int,
+    expanded: bool,
+    modified: bool,
+    added: bool,
+}
+export struct CodeRecord { number: string, text: string, tone: int }
+export struct TerminalRecord { text: string, tone: int }
+
+export struct DependencyRecord {
+    name: string,
+    installed: string,
+    latest: string,
+    status: string,
+    description: string,
+    update: bool,
+}
+
+export struct TaskRecord {
+    name: string,
+    command: string,
+    status: string,
+    duration: string,
+    last: string,
+    icon: int,
+    tone: int,
+}
+
+export struct ExtensionRecord {
+    name: string,
+    author: string,
+    version: string,
+    category: string,
+    state: string,
+    initials: string,
+    downloads: string,
+    tone: int,
+}
+
+export struct SearchRecord {
+    file: string,
+    line: string,
+    before: string,
+    match-text: string,
+    after: string,
+    first: bool,
+    count: string,
+}
+
+export struct CommandRecord {
+    name: string,
+    detail: string,
+    shortcut: string,
+    icon: int,
+}
+
+export struct ChangeRecord {
+    file: string,
+    state: string,
+    delta: string,
+}

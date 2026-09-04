@@ -1,0 +1,134 @@
+import { AtlasIcon, IconName, AtlasTypography } from "@atlas-ui/stable.slint";
+import { AtlasModalFrame } from "@atlas-ui/preview-nonresponsive.slint";
+import { FleetTheme } from "theme.slint";
+import { InstrumentLabel } from "components.slint";
+
+component ModalField inherits Rectangle {
+    in property <string> text;
+    height: 37px;
+    border-width: 1px; border-color: #2b4650; background: #0d151a;
+    Text { x: 11px; width: parent.width - 22px; text: root.text; color: #aabac1; font-family: AtlasTypography.font-sans; font-size: 11px; vertical-alignment: center; overflow: elide; }
+}
+
+component LightAction inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary: false;
+    in property <bool> danger: false;
+    callback clicked();
+    accessible-role: AccessibleRole.button;
+    accessible-label: root.text;
+    accessible-action-default => { root.clicked(); }
+    height: 35px;
+    border-width: 1px; border-color: root.danger ? #a9434b : root.primary ? #2d7d85 : #2b3c45;
+    background: pointer.pressed ? (root.danger ? #7f3037 : root.primary ? #185e66 : #1a252c)
+        : pointer.has-hover ? (root.danger ? #a9434b : root.primary ? #247881 : #18242a)
+        : root.danger ? #923941 : root.primary ? #1d6971 : #111920;
+    animate background { duration: 100ms; }
+    Text { x: 0px; width: parent.width; text: root.text; color: root.primary || root.danger ? #ffffff : #9cafb7; font-family: AtlasTypography.font-sans; font-size: 10px; font-weight: 600; horizontal-alignment: center; vertical-alignment: center; }
+    pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.clicked(); } }
+}
+
+export component AddDeviceModal inherits AtlasModalFrame {
+    callback cancelled();
+    callback confirmed();
+    private property <length> content-width: max(0px, min(
+        root.panel-width,
+        root.width - root.horizontal-inset * 2
+    ));
+    label: "Connect a device";
+    description: "Provision a simulated Fleet device";
+    panel-width: 500px;
+    panel-height: 530px;
+    backdrop-color: #020608cc;
+    panel-border-width: 1px;
+    panel-border-color: #31515b;
+    panel-radius: 4px;
+    panel-background: #111920;
+    panel-clip: true;
+    panel-shadow-color: #000000bb;
+    panel-shadow-blur: 34px;
+    panel-shadow-offset-y: 12px;
+    dismissed => { root.open = false; root.cancelled(); }
+        Rectangle { x: 0px; y: 0px; width: root.content-width; height: 78px; background: #151e24;
+            InstrumentLabel { x: 24px; y: 16px; width: parent.width - 76px; text: "FLEET / DEMO PROVISIONING"; color: FleetTheme.muted; }
+            Text { x: 24px; y: 34px; width: parent.width - 76px; height: 27px; text: "Connect a device"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 19px; font-weight: 650; vertical-alignment: center; }
+            AtlasIcon { x: parent.width - 39px; y: 27px; size: 14px; name: IconName.close; icon-color: #70858e; }
+            close := Rectangle {
+                x: parent.width - 54px; y: 14px; width: 44px; height: 44px;
+                background: close-pointer.has-hover ? #1b2b32 : #00000000;
+                animate background { duration: 100ms; }
+                accessible-role: AccessibleRole.button; accessible-label: "Close";
+                accessible-action-default => { root.open = false; root.cancelled(); }
+                close-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.open = false; root.cancelled(); } }
+            }
+            Rectangle { x: 0px; y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border; }
+        }
+        Rectangle { x: 24px; y: 96px; width: root.content-width - 48px; height: 344px;
+            InstrumentLabel { x: 0px; y: 0px; width: parent.width; text: "DEVICE NAME"; color: FleetTheme.muted; }
+            ModalField { x: 0px; y: 19px; width: parent.width; text: "e.g. RPI-DEMO-04"; }
+            InstrumentLabel { x: 0px; y: 68px; width: parent.width; text: "HOSTNAME / IP"; color: FleetTheme.muted; }
+            ModalField { x: 0px; y: 87px; width: parent.width; text: "192.0.2.100"; }
+            InstrumentLabel { x: 0px; y: 136px; width: (parent.width - 10px) / 2; text: "DEVICE TYPE"; color: FleetTheme.muted; }
+            InstrumentLabel { x: (parent.width + 10px) / 2; y: 136px; width: (parent.width - 10px) / 2; text: "LOCATION"; color: FleetTheme.muted; }
+            ModalField { x: 0px; y: 155px; width: (parent.width - 10px) / 2; text: "Raspberry Pi 5  ⌄"; }
+            ModalField { x: (parent.width + 10px) / 2; y: 155px; width: (parent.width - 10px) / 2; text: "SITE-ALPHA / RACK A"; }
+            InstrumentLabel { x: 0px; y: 204px; width: parent.width; text: "AUTHENTICATION"; color: FleetTheme.muted; }
+            ModalField { x: 0px; y: 223px; width: parent.width; text: "Demo SSH key  ⌄"; }
+            Rectangle { x: 0px; y: 280px; width: parent.width; height: 49px; border-width: 1px; border-color: #29454e; background: #10252b;
+                AtlasIcon { x: 12px; y: 18px; size: 13px; name: IconName.shield; icon-color: FleetTheme.cyan; }
+                Text { x: 36px; width: parent.width - 48px; text: "All values shown here are non-functional demonstration data."; color: #78909a; font-family: AtlasTypography.font-sans; font-size: 9px; vertical-alignment: center; wrap: word-wrap; }
+            }
+        }
+        Rectangle { x: 0px; y: root.panel-height - 74px; width: root.content-width; height: 74px; background: #10171d;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 1px; background: FleetTheme.border; }
+            LightAction { x: parent.width - 231px; y: 17px; width: 87px; text: "Cancel"; clicked => { root.open = false; root.cancelled(); } }
+            LightAction { x: parent.width - 134px; y: 17px; width: 110px; text: "Connect Device"; primary: true; clicked => { root.open = false; root.confirmed(); } }
+    }
+}
+
+export component RestartModal inherits AtlasModalFrame {
+    callback cancelled();
+    callback confirmed();
+    private property <length> content-width: max(0px, min(
+        root.panel-width,
+        root.width - root.horizontal-inset * 2
+    ));
+    label: "Restart device?";
+    description: "The selected device will be temporarily unavailable";
+    panel-width: 500px;
+    panel-height: 256px;
+    backdrop-color: #020608cc;
+    panel-border-width: 1px;
+    panel-border-color: #31515b;
+    panel-radius: 4px;
+    panel-background: #111920;
+    panel-clip: true;
+    panel-shadow-color: #000000bb;
+    panel-shadow-blur: 30px;
+    panel-shadow-offset-y: 10px;
+    dismissed => { root.open = false; root.cancelled(); }
+        Rectangle { x: 0px; y: 0px; width: root.content-width; height: 82px; background: #151e24;
+            InstrumentLabel { x: 24px; y: 18px; width: parent.width - 76px; text: "FLEET / REMOTE ACTION"; color: FleetTheme.muted; }
+            Text { x: 24px; y: 37px; width: parent.width - 76px; height: 27px; text: "Restart device?"; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 19px; font-weight: 650; vertical-alignment: center; }
+            AtlasIcon { x: parent.width - 39px; y: 28px; size: 14px; name: IconName.close; icon-color: #70858e; }
+            close := Rectangle {
+                x: parent.width - 54px; y: 14px; width: 44px; height: 44px;
+                background: close-pointer.has-hover ? #1b2b32 : #00000000;
+                animate background { duration: 100ms; }
+                accessible-role: AccessibleRole.button; accessible-label: "Close";
+                accessible-action-default => { root.open = false; root.cancelled(); }
+                close-pointer := TouchArea { mouse-cursor: MouseCursor.pointer; clicked => { root.open = false; root.cancelled(); } }
+            }
+            Rectangle { x: 0px; y: parent.height - 1px; width: parent.width; height: 1px; background: FleetTheme.border; }
+        }
+        Rectangle { x: 24px; y: 101px; width: root.content-width - 48px; height: 82px;
+            AtlasIcon { x: 0px; y: 9px; size: 18px; name: IconName.warning; icon-color: FleetTheme.warning; }
+            Text { x: 32px; y: 0px; width: parent.width - 32px; height: 28px; text: "RPI-DEMO-02 will be temporarily unavailable."; color: FleetTheme.text; font-family: AtlasTypography.font-sans; font-size: 11px; font-weight: 650; vertical-alignment: center; }
+            Text { x: 32px; y: 32px; width: parent.width - 32px; height: 39px; text: "Active services will stop and restart. Telemetry may be interrupted for up to two minutes."; color: #758a94; font-family: AtlasTypography.font-sans; font-size: 10px; wrap: word-wrap; }
+        }
+        Rectangle { x: 0px; y: root.panel-height - 68px; width: root.content-width; height: 68px; background: #10171d;
+            Rectangle { x: 0px; y: 0px; width: parent.width; height: 1px; background: FleetTheme.border; }
+            LightAction { x: parent.width - 225px; y: 16px; width: 72px; text: "Cancel"; clicked => { root.open = false; root.cancelled(); } }
+            LightAction { x: parent.width - 143px; y: 16px; width: 119px; text: "Restart Device"; danger: true; clicked => { root.open = false; root.confirmed(); } }
+    }
+}

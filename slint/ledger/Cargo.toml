@@ -1,0 +1,18 @@
+[package]
+name = "atlas-ledger"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+publish = false
+license = "MIT"
+
+[dependencies]
+atlas-ui = "=0.1.1"
+image = { version = "=0.25.10", default-features = false, features = ["png"] }
+slint = "=1.17.1"
+
+[build-dependencies]
+atlas-ui = "=0.1.1"
+slint-build = "=1.17.1"
+
+[workspace]
