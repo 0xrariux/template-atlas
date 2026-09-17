@@ -83,8 +83,8 @@ pub fn code_lines() -> Vec<CodeRecord> {
 pub fn terminal_lines() -> Vec<TerminalRecord> {
     [
         ("$ cargo run", 1),
-        ("   Compiling atlas-ui-core v0.2.0", 0),
-        ("   Compiling atlas-ui v0.2.0", 0),
+        ("   Compiling atlas-ui-core v0.2.2", 0),
+        ("   Compiling atlas-ui v0.2.2", 0),
         (
             "    Finished dev [unoptimized + debuginfo] target(s) in 1.84s",
             2,

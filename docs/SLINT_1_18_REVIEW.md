@@ -1,13 +1,16 @@
 # Slint 1.18 and Atlas source review
 
-Reviewed on 2026-09-17, before publishing the Atlas migration.
+Reviewed on 2026-09-17 against the `v0.2.0` source snapshot, before the
+`v0.2.2` registry release. The later version resolves the crates.io version
+collision and changes the `atlas-ui-testing` build dependency; it does not
+change the rendered template contracts.
 
 ## Dependency state
 
 Command, Forge, Fleet, and Ledger now pin `slint` and `slint-build` to 1.18.0
 and use the sibling Atlas source checkout for runtime and build dependencies.
-Atlas reports version 0.2.0 in this checkout; the published 0.1.1 crate
-is the earlier Slint 1.17.1 release. All four lockfiles resolve the local
+The reviewed checkout reported Atlas 0.2.0; the current manifests pin 0.2.2.
+The older published 0.1.1 crate uses Slint 1.17.1. All four lockfiles resolve the local
 Atlas crates, Slint 1.18.0, and `const-field-offset` 0.2.1. Ledger's native
 `Flickable` bindings use Slint 1.18 `content-*` properties; Atlas's public
 `viewport-*` properties keep their distinct API names.
@@ -52,7 +55,7 @@ not a valid measure of this Slint migration. No reference set was promoted.
 
 ## Release evidence and limits
 
-The four applications consume the tagged Atlas v0.2.0 source. Rust 1.92 CI
+The four applications now consume the tagged Atlas v0.2.2 source. Rust 1.92 CI
 passed on Linux, Windows, and macOS for the migration. Native keyboard and
 pointer interaction checks, input-method behavior, and assistive technology
 remain outside this macOS capture pass. The local `ai/` screenshots and diff

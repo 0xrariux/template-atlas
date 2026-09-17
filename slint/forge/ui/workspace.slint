@@ -37,7 +37,7 @@ component CodeEditor inherits Rectangle {
     in-out property <string> editor-text: root.file-name == "app.slint"
         ? "import { AtlasButton } from \"@atlas-ui/stable.slint\";\n\nexport component AppWindow inherits Window {\n    title: \"Atlas Forge\";\n    callback run-task(string);\n    AtlasButton {\n        text: \"Run Task\";\n        clicked => { root.run-task(\"build\"); }\n    }\n}"
         : root.file-name == "Cargo.toml"
-            ? "[package]\nname = \"atlas-ui\"\nversion = \"0.2.0\"\nedition = \"2024\"\n\n[dependencies]\nslint = \"=1.18.0\"\nserde = { version = \"1\", features = [\"derive\"] }"
+            ? "[package]\nname = \"atlas-ui\"\nversion = \"0.2.2\"\nedition = \"2024\"\n\n[dependencies]\nslint = \"=1.18.0\"\nserde = { version = \"1\", features = [\"derive\"] }"
             : root.file-name == "card.rs"
                 ? "pub struct Card {\n    pub title: String,\n    pub description: String,\n}\n\nimpl Card {\n    pub fn new(title: impl Into<String>) -> Self {\n        Self { title: title.into(), description: String::new() }\n    }\n}"
                 : root.file-name != "main.rs"
