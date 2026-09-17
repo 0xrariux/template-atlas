@@ -55,7 +55,7 @@ product identity, domain models, and navigation in the consuming application.
 
 ```bash
 git clone https://github.com/0xrariux/Atlas-UI.git Atlas
-git -C Atlas checkout 6e9f4cbfd42be205a0363e22ca92d3d527bf146b
+git -C Atlas checkout 0f31ba426bac84cf33e14af3afd0088da80b329c
 git clone https://github.com/0xrariux/template-atlas.git template-atlas
 cd template-atlas
 ```
