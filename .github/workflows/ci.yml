@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: 0xrariux/Atlas-UI
-          ref: 0f31ba426bac84cf33e14af3afd0088da80b329c
+          ref: v0.2.0
           path: Atlas
 
       - name: Install Linux build dependencies

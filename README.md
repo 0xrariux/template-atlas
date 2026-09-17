@@ -10,10 +10,10 @@ Four native desktop interface templates built with Slint and Rust:
 - **Atlas Fleet** — infrastructure control
 - **Atlas Ledger** — institutional treasury
 
-The templates consume the current source checkout of
-[`Atlas UI`](https://github.com/0xrariux/Atlas-UI) with Slint 1.18.0. Atlas
-0.2.0 is the Slint 1.18 release candidate; the published 0.1.1 crate is
-the earlier Slint 1.17.1 release. The four manifests use a sibling Atlas path
+The templates consume the
+[`Atlas UI v0.2.0 source`](https://github.com/0xrariux/Atlas-UI/releases/tag/v0.2.0)
+with Slint 1.18.0. The published Atlas 0.1.1 crate is the earlier Slint 1.17.1
+release. The four manifests use a sibling Atlas path
 for both runtime and build dependencies until a compatible package is released.
 
 ## Preview
@@ -55,7 +55,7 @@ product identity, domain models, and navigation in the consuming application.
 
 ```bash
 git clone https://github.com/0xrariux/Atlas-UI.git Atlas
-git -C Atlas checkout 0f31ba426bac84cf33e14af3afd0088da80b329c
+git -C Atlas checkout v0.2.0
 git clone https://github.com/0xrariux/template-atlas.git template-atlas
 cd template-atlas
 ```
@@ -63,8 +63,8 @@ cd template-atlas
 Keep `Atlas/` and `template-atlas/` in the same parent directory. Each
 application pins `slint` and `slint-build` to 1.18.0 and configures the
 `@atlas-ui` Slint library path through `atlas_ui::slint_library_paths()` in its
-build script. The checkout command and CI pin the same Atlas 0.2.0 candidate
-revision. The published Atlas 0.1.1 source is not equivalent.
+build script. The checkout command and CI pin the same Atlas v0.2.0 source
+tag. The published Atlas 0.1.1 source is not equivalent.
 
 ## Validate
 

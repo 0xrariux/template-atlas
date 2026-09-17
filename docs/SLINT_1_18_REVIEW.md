@@ -50,11 +50,10 @@ changed pixels follow text and icon edges. The older `ai/reference/*/golden/`
 images also include original design references; their larger differences are
 not a valid measure of this Slint migration. No reference set was promoted.
 
-## Remaining release evidence
+## Release evidence and limits
 
-The Atlas source migration is still uncommitted locally. Hosted CI cannot
-reproduce this path dependency until that Atlas revision is pushed; a tag is
-not required for the local review. Native Linux and Windows runs, keyboard and
+The four applications consume the tagged Atlas v0.2.0 source. Rust 1.92 CI
+passed on Linux, Windows, and macOS for the migration. Native keyboard and
 pointer interaction checks, input-method behavior, and assistive technology
 remain outside this macOS capture pass. The local `ai/` screenshots and diff
 images are ignored working evidence, not portable release assets.
