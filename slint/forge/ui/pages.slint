@@ -25,7 +25,7 @@ component SearchPage inherits Rectangle {
             x: 16px; y: 16px; width: parent.width - 32px; height: 41px;
             border-width: 1px; border-color: #343a3f; background: #111315;
             AtlasIcon { x: 11px; y: 14px; size: 13px; name: IconName.search; icon-color: #758089; }
-            MonoLabel { x: 32px; text: "PrimaryButton"; color: #c7cbce; }
+            MonoLabel { x: 32px; text: "AtlasButton"; color: #c7cbce; }
             MonoLabel { width: parent.width - 12px; text: "↵"; color: #636b72; horizontal-alignment: right; }
         }
         Rectangle {
@@ -47,7 +47,7 @@ component SearchPage inherits Rectangle {
         }
         PanelRule { y: 156px; width: parent.width; }
         Rectangle { y: 156px; width: parent.width; height: 40px;
-            Text { x: 13px; text: "PrimaryButton"; color: #d4d8db; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; vertical-alignment: center; }
+            Text { x: 13px; text: "AtlasButton"; color: #d4d8db; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; vertical-alignment: center; }
             Text { x: 88px; text: "· 9 matches"; color: #667078; font-family: AtlasTypography.font-sans; font-size: 8px; vertical-alignment: center; }
             Text { width: parent.width - 18px; text: "⌯ Filter results"; color: #737b82; font-family: AtlasTypography.font-sans; font-size: 8px; horizontal-alignment: right; vertical-alignment: center; }
         }
@@ -263,7 +263,7 @@ component ExtensionsPage inherits Rectangle {
         Rectangle { x: 0px; y: 0px; width: parent.width; height: 2px; background: #58a58e; }
         AtlasIcon { x: 25px; y: 51px; size: 26px; name: IconName.grid; icon-color: #69b69d; }
         MicroLabel { x: 60px; y: 34px; text: "FEATURED FOR ATLAS"; color: #648e82; }
-        Text { x: 60px; y: 53px; text: "Slint Tools 1.14"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 700; }
+        Text { x: 60px; y: 53px; text: "Slint Tools 1.18"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 14px; font-weight: 700; }
         Text { x: 60px; y: 77px; text: "Live preview, language intelligence, and component navigation."; color: #75827e; font-family: AtlasTypography.font-sans; font-size: 8px; }
         Rectangle { x: parent.width - 449px; y: 26px; width: 285px; height: 82px; border-width: 1px; border-color: #38544b; background: #111714;
             Text { x: 12px; y: 8px; width: parent.width - 24px; height: parent.height - 16px; text: "export component AppWindow\ninherits Window {\n    preferred-width: 800px;\n}"; color: #9ab4aa; font-family: AtlasTypography.font-mono; font-size: 9px; vertical-alignment: center; }

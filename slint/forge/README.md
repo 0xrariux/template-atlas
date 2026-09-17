@@ -1,7 +1,7 @@
 # Atlas Forge — native Slint port
 
 Atlas Forge is a native Rust + Slint engineering-workspace template. It
-consumes the published Atlas UI crate and keeps all Forge-specific workbench
+consumes the sibling Atlas UI source checkout and keeps all Forge-specific workbench
 composition in this crate.
 
 ```bash

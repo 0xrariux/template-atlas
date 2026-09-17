@@ -72,15 +72,15 @@ export component App inherits Window {
             x: 0px; y: LedgerTheme.topbar-height;
             width: parent.width - (root.page-scrollable ? AtlasViewportTokens.scrollbar-hit-width : 0px);
             height: root.page-viewport-height;
-            viewport-width: self.width;
-            viewport-height: max(self.height, root.page-content-height);
-            viewport-y: -min(root.page-maximum-y, max(0px, root.page-viewport-y));
+            content-width: self.width;
+            content-height: max(self.height, root.page-content-height);
+            content-y: -min(root.page-maximum-y, max(0px, root.page-viewport-y));
             interactive: root.page-scrollable;
-            changed viewport-y => {
-                root.page-viewport-y = min(root.page-maximum-y, max(0px, -self.viewport-y));
+            changed content-y => {
+                root.page-viewport-y = min(root.page-maximum-y, max(0px, -self.content-y));
             }
             flicked => {
-                root.page-viewport-y = min(root.page-maximum-y, max(0px, -self.viewport-y));
+                root.page-viewport-y = min(root.page-maximum-y, max(0px, -self.content-y));
             }
             content-layer := Rectangle {
                 width: parent.width;

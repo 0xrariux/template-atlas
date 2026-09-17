@@ -3,11 +3,11 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$repo_root/slint/forge/Cargo.toml"
-binary="$repo_root/slint/forge/target/debug/atlas-forge"
+binary="${CARGO_TARGET_DIR:-$repo_root/slint/forge/target}/debug/atlas-forge"
 output_dir="${1:-$repo_root/ai/comparison/forge/candidate}"
 
 mkdir -p "$output_dir"
-cargo build --manifest-path "$manifest" --bin atlas-forge
+cargo build --manifest-path "$manifest" --bin atlas-forge --locked
 
 states=(
   explorer explorer-inspector-outline explorer-problems explorer-output

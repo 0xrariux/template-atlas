@@ -3,11 +3,11 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$repo_root/slint/ledger/Cargo.toml"
-binary="$repo_root/slint/ledger/target/debug/atlas-ledger"
+binary="${CARGO_TARGET_DIR:-$repo_root/slint/ledger/target}/debug/atlas-ledger"
 output_dir="${1:-$repo_root/ai/comparison/ledger/candidate}"
 
 mkdir -p "$output_dir"
-cargo build --manifest-path "$manifest" --bin atlas-ledger
+cargo build --manifest-path "$manifest" --bin atlas-ledger --locked
 
 states=(
   portfolio portfolio-1y portfolio-performance portfolio-notifications

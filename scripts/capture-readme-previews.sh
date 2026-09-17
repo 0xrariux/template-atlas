@@ -3,14 +3,14 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="$repo_root/assets/previews"
-preview_target_dir="$repo_root/target/readme-previews"
+preview_target_dir="${CARGO_TARGET_DIR:-$repo_root/target/readme-previews}"
 
 mkdir -p "$output_dir"
 
 for product in command forge fleet ledger; do
   CARGO_TARGET_DIR="$preview_target_dir" \
     cargo build --manifest-path "$repo_root/slint/$product/Cargo.toml" \
-    --bin "atlas-$product"
+    --bin "atlas-$product" --locked
 done
 
 COMMAND_PAGE=0 \

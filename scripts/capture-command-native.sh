@@ -3,11 +3,11 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$repo_root/slint/command/Cargo.toml"
-binary="$repo_root/slint/command/target/debug/atlas-command"
+binary="${CARGO_TARGET_DIR:-$repo_root/slint/command/target}/debug/atlas-command"
 output_dir="${1:-$repo_root/ai/comparison/command/candidate}"
 
 mkdir -p "$output_dir"
-cargo build --manifest-path "$manifest" --bin atlas-command
+cargo build --manifest-path "$manifest" --bin atlas-command --locked
 
 pages=(overview analytics services activity alerts logs team integrations settings)
 for index in {0..8}; do

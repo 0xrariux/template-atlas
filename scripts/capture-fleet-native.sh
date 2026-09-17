@@ -3,11 +3,11 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$repo_root/slint/fleet/Cargo.toml"
-binary="$repo_root/slint/fleet/target/debug/atlas-fleet"
+binary="${CARGO_TARGET_DIR:-$repo_root/slint/fleet/target}/debug/atlas-fleet"
 output_dir="${1:-$repo_root/ai/comparison/fleet/candidate}"
 
 mkdir -p "$output_dir"
-cargo build --manifest-path "$manifest" --bin atlas-fleet
+cargo build --manifest-path "$manifest" --bin atlas-fleet --locked
 
 states=(
   overview overview-devices overview-list overview-filter-online

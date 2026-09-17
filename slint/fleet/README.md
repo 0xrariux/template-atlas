@@ -1,7 +1,7 @@
 # Atlas Fleet — native Slint port
 
 This directory contains the native Rust + Slint implementation of the Atlas
-Fleet template. It consumes the published Atlas UI crate; Fleet screens,
+Fleet template. It consumes the sibling Atlas UI source checkout; Fleet screens,
 fixtures, and product compositions remain owned by `template-atlas`.
 
 Run it from this directory with:

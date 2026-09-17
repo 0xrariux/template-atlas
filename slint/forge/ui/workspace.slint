@@ -35,14 +35,14 @@ component CodeEditor inherits Rectangle {
     in property <[CodeRecord]> lines;
     in property <string> file-name;
     in-out property <string> editor-text: root.file-name == "app.slint"
-        ? "import { PrimaryButton } from \"@atlas-ui/stable.slint\";\n\nexport component AppWindow inherits Window {\n    title: \"Atlas Forge\";\n    PrimaryButton {\n        text: \"Run Task\";\n    }\n}"
+        ? "import { AtlasButton } from \"@atlas-ui/stable.slint\";\n\nexport component AppWindow inherits Window {\n    title: \"Atlas Forge\";\n    callback run-task(string);\n    AtlasButton {\n        text: \"Run Task\";\n        clicked => { root.run-task(\"build\"); }\n    }\n}"
         : root.file-name == "Cargo.toml"
-            ? "[package]\nname = \"atlas-ui\"\nversion = \"0.4.0\"\nedition = \"2024\"\n\n[dependencies]\nslint = \"1.14\"\nserde = { version = \"1\", features = [\"derive\"] }"
+            ? "[package]\nname = \"atlas-ui\"\nversion = \"0.2.0\"\nedition = \"2024\"\n\n[dependencies]\nslint = \"=1.18.0\"\nserde = { version = \"1\", features = [\"derive\"] }"
             : root.file-name == "card.rs"
                 ? "pub struct Card {\n    pub title: String,\n    pub description: String,\n}\n\nimpl Card {\n    pub fn new(title: impl Into<String>) -> Self {\n        Self { title: title.into(), description: String::new() }\n    }\n}"
                 : root.file-name != "main.rs"
                     ? "// " + root.file-name + "\n\n// Editable demonstration buffer.\n// Select this text or start typing to modify the document.\n"
-                    : "use slint::{ComponentHandle, SharedString};\nuse atlas_ui::{AtlasTheme, PrimaryButton};\n\nslint::include_modules!();\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    tracing_subscriber::fmt()\n        .with_target(false)\n        .compact()\n        .init();\n\n    let app = AppWindow::new()?;\n    let weak = app.as_weak();\n\n    app.on_run_task(move |task_id| {\n        let handle = weak.clone();\n        tokio::spawn(async move {\n            let result = execute_task(task_id).await;\n            handle.upgrade_in_event_loop(move |ui| {\n                ui.set_status(SharedString::from(result));\n            });\n        });\n    });\n\n    app.run()?;\n    Ok(())\n}";
+                    : "use slint::{ComponentHandle, SharedString};\n\nslint::include_modules!();\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    tracing_subscriber::fmt()\n        .with_target(false)\n        .compact()\n        .init();\n\n    let app = AppWindow::new()?;\n    let weak = app.as_weak();\n\n    app.on_run_task(move |task_id| {\n        let handle = weak.clone();\n        tokio::spawn(async move {\n            let result = execute_task(task_id).await;\n            handle.upgrade_in_event_loop(move |ui| {\n                ui.set_status(SharedString::from(result));\n            });\n        });\n    });\n\n    app.run()?;\n    Ok(())\n}";
     private property <bool> navigation-needed: root.lines.length * 15.6px + 20px > root.height;
     background: ForgeTheme.canvas;
     Rectangle { x: 0px; y: 0px; width: 49px; height: parent.height; background: ForgeTheme.canvas; border-width: 1px; border-color: #1b2024; }
@@ -168,7 +168,7 @@ component PropertiesInspector inherits Rectangle {
             Rectangle { x: 15px; y: 18px; width: 31px; height: 31px; border-width: 1px; border-color: #5f4828; background: #2a231a;
                 MonoLabel { width: parent.width; text: "PB"; color: ForgeTheme.accent; horizontal-alignment: center; }
             }
-            Text { x: 55px; y: 17px; text: "PrimaryButton"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
+            Text { x: 55px; y: 17px; text: "AtlasButton"; color: ForgeTheme.text; font-family: AtlasTypography.font-sans; font-size: 9px; font-weight: 700; }
             Text { x: 55px; y: 34px; text: "Atlas Component"; color: #697179; font-family: AtlasTypography.font-sans; font-size: 8px; }
             ForgeStatusDot { x: parent.width - 21px; y: 27px; label: "Component valid"; tone: BadgeTone.healthy; indicator-color: ForgeTheme.success; }
         }
@@ -200,7 +200,7 @@ component PropertiesInspector inherits Rectangle {
     }
     if root.outline: VerticalLayout {
         y: 44px; width: parent.width; spacing: 0px;
-        for row[index] in ["⌄  AppWindow", "   ⌄  Toolbar", "        PrimaryButton", "   ›  Workspace", "   ›  Terminal"]: Rectangle {
+        for row[index] in ["⌄  AppWindow", "   ⌄  Toolbar", "        AtlasButton", "   ›  Workspace", "   ›  Terminal"]: Rectangle {
             height: 27px; background: index == 2 ? #24231f : #00000000;
             Text { x: 10px; text: row; color: index == 2 ? #e2bd78 : #939aa0; font-family: AtlasTypography.font-sans; font-size: 10px; vertical-alignment: center; }
         }

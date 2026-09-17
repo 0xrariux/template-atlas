@@ -1,7 +1,7 @@
 # Atlas Ledger — Slint + Rust
 
 Native Atlas Ledger template built with Slint and the reusable Atlas UI library
-from its published crate.
+from the sibling source checkout.
 
 The showcase is deterministic and local-only: it contains fictional balances,
 identifiers, providers, and transfers, and never contacts a financial service.

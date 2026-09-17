@@ -1,6 +1,6 @@
 # Atlas Command — Slint + Rust
 
-Native Atlas Command template. The app consumes the published `atlas-ui`
+Native Atlas Command template. The app consumes the sibling Atlas UI source
 facade and keeps all Command-specific UI in this folder.
 
 ## Run

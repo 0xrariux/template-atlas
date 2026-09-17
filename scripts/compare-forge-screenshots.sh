@@ -5,11 +5,11 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 reference_dir="${1:-$repo_root/ai/reference/forge/golden}"
 candidate_dir="${2:-$repo_root/ai/comparison/forge/candidate}"
 output_dir="${3:-$repo_root/ai/comparison/forge/diff}"
-comparator="$repo_root/slint/command/target/debug/visual_diff"
+comparator="${CARGO_TARGET_DIR:-$repo_root/slint/command/target}/debug/visual_diff"
 
 mkdir -p "$output_dir"
 if [[ ! -x "$comparator" ]]; then
-  cargo build --manifest-path "$repo_root/slint/command/Cargo.toml" --bin visual_diff
+  cargo build --manifest-path "$repo_root/slint/command/Cargo.toml" --bin visual_diff --locked
 fi
 
 metrics_file="$output_dir/metrics.tsv"

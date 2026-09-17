@@ -35,6 +35,15 @@ jobs:
     steps:
       - name: Check out template-atlas
         uses: actions/checkout@v5
+        with:
+          path: template-atlas
+
+      - name: Check out Atlas UI
+        uses: actions/checkout@v5
+        with:
+          repository: 0xrariux/Atlas-UI
+          ref: 6e9f4cbfd42be205a0363e22ca92d3d527bf146b
+          path: Atlas
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
@@ -61,4 +70,5 @@ jobs:
           shared-key: template-atlas-${{ matrix.name }}-rust-1.92
 
       - name: Run the quality gate
+        working-directory: template-atlas
         run: sh scripts/quality-gate.sh

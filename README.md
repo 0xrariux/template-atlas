@@ -1,7 +1,7 @@
 # Atlas Template Suite
 
 [![CI](https://github.com/0xrariux/template-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/0xrariux/template-atlas/actions/workflows/ci.yml)
-[![Atlas UI 0.1.1](https://img.shields.io/badge/Atlas_UI-0.1.1-2379F4.svg)](https://crates.io/crates/atlas-ui/0.1.1)
+[![Atlas UI source · Slint 1.18](https://img.shields.io/badge/Atlas_UI_source-Slint_1.18-2379F4.svg)](https://github.com/0xrariux/Atlas-UI)
 
 Four native desktop interface templates built with Slint and Rust:
 
@@ -10,10 +10,11 @@ Four native desktop interface templates built with Slint and Rust:
 - **Atlas Fleet** — infrastructure control
 - **Atlas Ledger** — institutional treasury
 
-The templates consume the published
-[`atlas-ui` 0.1.1 crate](https://crates.io/crates/atlas-ui/0.1.1). Its source,
-component catalog, and integration documentation live in the companion
-[`Atlas UI`](https://github.com/0xrariux/Atlas-UI) repository.
+The templates consume the current source checkout of
+[`Atlas UI`](https://github.com/0xrariux/Atlas-UI) with Slint 1.18.0. Atlas
+0.2.0 is the Slint 1.18 release candidate; the published 0.1.1 crate is
+the earlier Slint 1.17.1 release. The four manifests use a sibling Atlas path
+for both runtime and build dependencies until a compatible package is released.
 
 ## Preview
 
@@ -47,18 +48,23 @@ product identity, domain models, and navigation in the consuming application.
 ## Requirements
 
 - Rust 1.92 with Cargo
+- A sibling Atlas UI source checkout containing the Slint 1.18 changes
 - Internet access for the first dependency download
 
-## Clone the templates
+## Clone the templates and Atlas
 
 ```bash
+git clone https://github.com/0xrariux/Atlas-UI.git Atlas
+git -C Atlas checkout 6e9f4cbfd42be205a0363e22ca92d3d527bf146b
 git clone https://github.com/0xrariux/template-atlas.git template-atlas
 cd template-atlas
 ```
 
-No Atlas source checkout is required for normal use. Each application pins the
-published Atlas crate and configures the `@atlas-ui` Slint library path through
-`atlas_ui::slint_library_paths()` in its build script.
+Keep `Atlas/` and `template-atlas/` in the same parent directory. Each
+application pins `slint` and `slint-build` to 1.18.0 and configures the
+`@atlas-ui` Slint library path through `atlas_ui::slint_library_paths()` in its
+build script. The checkout command and CI pin the same Atlas 0.2.0 candidate
+revision. The published Atlas 0.1.1 source is not equivalent.
 
 ## Validate
 
@@ -74,6 +80,10 @@ Run the complete formatting, compilation, Clippy, and test gate with:
 ```bash
 ./scripts/quality-gate.sh
 ```
+
+The prerelease Slint 1.18 and local Atlas source review, including 97 rendered
+states and comparison limits, is recorded in
+[docs/SLINT_1_18_REVIEW.md](docs/SLINT_1_18_REVIEW.md).
 
 ## Run a template
 
@@ -101,23 +111,9 @@ guidance on when an animated GIF is useful.
 
 ## Validate a local Atlas change
 
-Atlas maintainers can place both repositories next to each other and run the
-external consumer gate from the Atlas checkout:
-
-```text
-workspace/
-├── Atlas/
-└── template-atlas/
-```
-
-```bash
-cd ../Atlas
-sh scripts/template-consumer-gate.sh --template-root ../template-atlas
-```
-
-The gate injects a temporary Cargo patch so all four applications compile
-against the local Atlas checkout without changing these published dependency
-declarations.
+With the repositories side by side, run `./scripts/quality-gate.sh` from this
+repository. All four templates compile directly against the sibling Atlas
+checkout, so no temporary Cargo patch is needed.
 
 ## Demo data
 
